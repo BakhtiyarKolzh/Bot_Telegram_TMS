@@ -8,7 +8,8 @@ from telebot import types
 import configure  #### Library for Token
 
 import fnmatch
-
+import keyboard
+from keyboard import press
 #################################
 # System Protection  by "ID"
 bot = telebot.TeleBot(configure.config["token"])
@@ -96,11 +97,29 @@ def user_answer_for_NWC(message):
 def PathLaunch(filepath,message,call):
     if (os.path.exists(filepath)):
         os.startfile(filepath)
-        bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен, ожидайте меню для выбора файлов")
+        bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен")
     return
 #################################################################################################################
 ##
-
+#                SHABLON 1
+# def user_answer_for_PDF(message):
+#     open_dir = str(message.text)
+#     if os.path.exists(open_dir):
+#         for file_name in os.listdir(open_dir):
+#             if fnmatch.fnmatch(file_name, '*.rvt'):
+#                 print(file_name)
+#                 bot.send_message(message.chat.id, file_name)
+#
+#
+#
+# ##  end PROCESS
+#         filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+#         PathLaunch(filepath, message, "PDF")
+#         print("PDF")
+#     else:
+#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+###########################################################################################
+#            SHABLON 2
 def user_answer_for_PDF(message):
     open_dir = str(message.text)
     if os.path.exists(open_dir):
@@ -108,19 +127,30 @@ def user_answer_for_PDF(message):
             if fnmatch.fnmatch(file_name, '*.rvt'):
                 print(file_name)
                 bot.send_message(message.chat.id, file_name)
-
-
-
 ##  end PROCESS
         filepath = os.path.join(open_dir + "\ExportToPDF.bat")
         PathLaunch(filepath, message, "PDF")
         print("PDF")
+        result=bot.send_message(message.chat.id, "Выберите файлы:")
+        bot.register_next_step_handler(result, func_keyboard)
+
+
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
 
 
 
+def func_keyboard(message):
+    int_input_number = message.text
+
+
+    number_file=keyboard.write(int_input_number)
+    # key_enter = keyboard.press_and_release('enter'+number_file)
+    # result=keyboard.is_pressed(number_file+'enter')
+    a=press('enter')
+    result=keyboard.is_pressed(number_file+a)
+1
 
 
 
