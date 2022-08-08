@@ -7,6 +7,8 @@ import telebot
 from telebot import types
 import configure  #### Library for Token
 
+import fnmatch
+
 #################################
 # System Protection  by "ID"
 bot = telebot.TeleBot(configure.config["token"])
@@ -80,14 +82,14 @@ def user_answer_for_NWC(message):
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
-def user_answer_for_PDF(message):
-    open_dir = str(message.text)
-    if os.path.exists(open_dir):
-        filepath = os.path.join(open_dir + "\ExportToPDF.bat")
-        PathLaunch(filepath, message, "PDF")
-        print("PDF")
-    else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+# def user_answer_for_PDF(message):
+#     open_dir = str(message.text)
+#     if os.path.exists(open_dir):
+#         filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+#         PathLaunch(filepath, message, "PDF")
+#         print("PDF")
+#     else:
+#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
 
 ##############################################################################################  Fuction for call
@@ -98,6 +100,23 @@ def PathLaunch(filepath,message,call):
     return
 #################################################################################################################
 ##
+
+def user_answer_for_PDF(message):
+    open_dir = str(message.text)
+    if os.path.exists(open_dir):
+        for file_name in os.listdir(open_dir):
+            if fnmatch.fnmatch(file_name, '*.rvt'):
+                print(file_name)
+                bot.send_message(message.chat.id, file_name)
+
+
+
+##  end PROCESS
+        filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+        PathLaunch(filepath, message, "PDF")
+        print("PDF")
+    else:
+        bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
 
 
