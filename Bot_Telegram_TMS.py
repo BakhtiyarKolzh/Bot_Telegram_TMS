@@ -10,6 +10,11 @@ import configure  #### Library for Token
 import fnmatch
 import keyboard
 from keyboard import press
+import sys
+import subprocess
+import argparse
+
+newfile = os.path.join("D:\GITHUB", 'newfile.txt')
 #################################
 # System Protection  by "ID"
 bot = telebot.TeleBot(configure.config["token"])
@@ -120,94 +125,92 @@ def PathLaunch(filepath,message,call):
 #         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 ###########################################################################################
 #            SHABLON 2
+# def user_answer_for_PDF(message):
+#     open_dir = str(message.text)
+#     if os.path.exists(open_dir):
+
+
+
+##  end PROCESS
+    #     filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+    #     PathLaunch(filepath, message, "PDF")
+    #     print("PDF")
+    #
+    #         for direction in filepath:
+    #             direction = sys.stdin.readlines()
+    #             print(direction)
+    #
+    #
+    #
+    #     result=bot.send_message(message.chat.id, "Выберите файлы:")
+    #     bot.register_next_step_handler(result, func_for_keyboard)
+    #
+    #
+    #
+    # else:
+    #     bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+
+###########################################################################################
 def user_answer_for_PDF(message):
     open_dir = str(message.text)
     if os.path.exists(open_dir):
-        for file_name in os.listdir(open_dir):
-            if fnmatch.fnmatch(file_name, '*.rvt'):
-                print(file_name)
-                bot.send_message(message.chat.id, file_name)
-##  end PROCESS
-        filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+        filepath = os.path.join(open_dir, "ExportToPDF.bat")
         PathLaunch(filepath, message, "PDF")
-        print("PDF")
-        result=bot.send_message(message.chat.id, "Выберите файлы:")
-        bot.register_next_step_handler(result, func_keyboard)
+        # print("PDF")
+
+        with subprocess.Popen(filepath, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
+
+
+
+            outs, errs = proc.communicate(timeout=5)
+            print("PDF")
+            with open(newfile, 'wb') as file:
+                file.write(outs)
+                print("Yes")
+
+
+
+
+        # result=bot.send_message(message.chat.id, "Выберите файлы:")
+        # bot.register_next_step_handler(result, func_for_keyboard)
+
 
 
 
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
-###########################################################################################
 
 
-def func_keyboard(message):
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################################################
+def func_for_keyboard(message):
     number_of_file = str(message.text)
     if number_of_file >"0":
         keyboard.write(number_of_file)
         press('enter')
-        a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
-        bot.register_next_step_handler(a, func_keyboard)
+        console_a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
+        bot.register_next_step_handler(console_a, func_for_keyboard)
     elif number_of_file == "0":
         keyboard.write("0")
         press('enter')
-        q=bot.send_message(message.chat.id, "Опреация запущена")
-        bot.register_next_step_handler(q, export_par)
+        bot.send_message(message.chat.id, f"Операция по выгрузке запущена")
     else:
-        qwe=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
-        bot.register_next_step_handler(qwe, func_keyboard)
-
-
-
-
-
-
-
-   # if int_input_number!=str("0"):
-        #ap=keyboard.is_pressed(int_input_number+press('enter'))
-       # print(ap)
-        # bot.register_next_step_handler(ap, zero_press_enter)
-
-
-    # # bot.register_next_step_handler(a, zero_press_enter)
-    #
-    # number_file= keyboard.write(int_input_number)
-    # a = press('enter')
-    # q = str(number_file) + str(a)
-    #
-    # result = keyboard.is_pressed(q)
-    # return
-
-
-
-
-    # key_enter = keyboard.press_and_release('enter'+number_file)
-    # result=keyboard.is_pressed(number_file+'enter')
-
-#
-# def zero_press_enter(message):
-#     press_zero=press('0')
-#     press_enter = press('enter')
-#     keyboard.is_pressed(press_zero+press_enter)
-#     return
-#
-
-
-
-
-
-
-
-
-
-
-
-
-  #
-        # number_file = keyboard.write(int_input_number)
-        # a = press('enter')
-        # result = keyboard.is_pressed(number_file + a)
+        console_b=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
+        bot.register_next_step_handler(console_b, func_for_keyboard)
+#############################################################################################################
 
 
 
@@ -293,3 +296,38 @@ bot.polling(none_stop=True)
 #     return
 
 
+# def user_answer_for_PDF(message):
+#     open_dir = str(message.text)
+#     if os.path.exists(open_dir):
+#         for file_name in os.listdir(open_dir):
+#             if fnmatch.fnmatch(file_name, '*.rvt'):
+#                 print(file_name)
+#                 bot.send_message(message.chat.id, file_name)
+# ##  end PROCESS
+#         filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+#         PathLaunch(filepath, message, "PDF")
+#         print("PDF")
+#         result=bot.send_message(message.chat.id, "Выберите файлы:")
+#         bot.register_next_step_handler(result, func_for_keyboard)
+#
+#
+#
+#     else:
+#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+#
+#
+# #
+# def func_for_keyboard(message):
+#     number_of_file = str(message.text)
+#     if number_of_file >"0":
+#         keyboard.write(number_of_file)
+#         press('enter')
+#         console_a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
+#         bot.register_next_step_handler(console_a, func_for_keyboard)
+#     elif number_of_file == "0":
+#         keyboard.write("0")
+#         press('enter')
+#         bot.send_message(message.chat.id, f"Операция по выгрузке запущена")
+#     else:
+#         console_b=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
+#         bot.register_next_step_handler(console_b, func_for_keyboard)
