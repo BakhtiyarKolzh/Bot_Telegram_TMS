@@ -135,23 +135,79 @@ def user_answer_for_PDF(message):
         bot.register_next_step_handler(result, func_keyboard)
 
 
+
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
-
+###########################################################################################
 
 
 def func_keyboard(message):
-    int_input_number = message.text
+    number_of_file = str(message.text)
+    if number_of_file >"0":
+        keyboard.write(number_of_file)
+        press('enter')
+        a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
+        bot.register_next_step_handler(a, func_keyboard)
+    elif number_of_file == "0":
+        keyboard.write("0")
+        press('enter')
+        q=bot.send_message(message.chat.id, "Опреация запущена")
+        bot.register_next_step_handler(q, export_par)
+    else:
+        qwe=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
+        bot.register_next_step_handler(qwe, func_keyboard)
 
 
-    number_file=keyboard.write(int_input_number)
+
+
+
+
+
+   # if int_input_number!=str("0"):
+        #ap=keyboard.is_pressed(int_input_number+press('enter'))
+       # print(ap)
+        # bot.register_next_step_handler(ap, zero_press_enter)
+
+
+    # # bot.register_next_step_handler(a, zero_press_enter)
+    #
+    # number_file= keyboard.write(int_input_number)
+    # a = press('enter')
+    # q = str(number_file) + str(a)
+    #
+    # result = keyboard.is_pressed(q)
+    # return
+
+
+
+
     # key_enter = keyboard.press_and_release('enter'+number_file)
     # result=keyboard.is_pressed(number_file+'enter')
-    a=press('enter')
-    result=keyboard.is_pressed(number_file+a)
-1
 
+#
+# def zero_press_enter(message):
+#     press_zero=press('0')
+#     press_enter = press('enter')
+#     keyboard.is_pressed(press_zero+press_enter)
+#     return
+#
+
+
+
+
+
+
+
+
+
+
+
+
+  #
+        # number_file = keyboard.write(int_input_number)
+        # a = press('enter')
+        # result = keyboard.is_pressed(number_file + a)
 
 
 
