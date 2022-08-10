@@ -3,33 +3,32 @@
 
 import os
 import os.path
-import telebot
-from telebot import types
-import configure  #### Library for Token
-
-import fnmatch
 import keyboard
 from keyboard import press
-import sys
-import subprocess
-import argparse
+import telebot
+from telebot import types
 
-newfile = os.path.join("D:\GITHUB", 'newfile.txt')
+import configure  #### Library for Token
+import authentication   #### Library Protect ID
+
 #################################
-# System Protection  by "ID"
+#     Input dates
 bot = telebot.TeleBot(configure.config["token"])
+users_start = [315207431,385753167]  # последнее - id группы если бот что-то должен делать в группе
 
-users_start = [315207431]  # последнее - id группы если бот что-то должен делать в группе
+#################################
 
-
+##############################################################################
 # Органичение выполнение команды start
 @bot.message_handler(func=lambda message: message.chat.id not in users_start, commands=['start', "print", "url"])
 def some(message):
     bot.send_message(message.chat.id, 'У Вас нет прав на выполнение данной команды, обратитесь к администратору')
-
+    return
 
 ##############################################################################
 
+
+##############################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
@@ -41,8 +40,10 @@ def start(message):
         menu_for_button.add(types.KeyboardButton(button))
     bot.send_message(message.chat.id, "Выберите подходящую команду:", reply_markup=menu_for_button)
 
+    return
 
-#######################################                 #######################################Button for process /print
+##############################################################################   Button for process /print
+
 @bot.message_handler(commands=['print'])
 def export_par(message):
     markup = types.InlineKeyboardMarkup(row_width=3)
@@ -52,6 +53,7 @@ def export_par(message):
     markup.add(button_DWG, button_NWC, button_PDF)
     bot.send_message(message.chat.id, "Выберите формат для перевода данных:", reply_markup=markup)
 
+    return
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
@@ -67,8 +69,12 @@ def callback(call):
         elif call.data == 'PDF':
             dir_for_PDF = bot.send_message(call.message.chat.id, 'Введите путь для PDF')
             bot.register_next_step_handler(dir_for_PDF, user_answer_for_PDF)
+    return
+
 ##################################################################################################################
 
+
+###############################################################################
 def user_answer_for_DWG(message):
     open_dir = str(message.text)
     if os.path.exists(open_dir):
@@ -77,6 +83,7 @@ def user_answer_for_DWG(message):
         print("DWG")
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+    return
 
 
 def user_answer_for_NWC(message):
@@ -87,6 +94,8 @@ def user_answer_for_NWC(message):
         print("NWC")
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+    return
+
 
 # def user_answer_for_PDF(message):
 #     open_dir = str(message.text)
@@ -96,109 +105,55 @@ def user_answer_for_NWC(message):
 #         print("PDF")
 #     else:
 #         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+##################################################################################################################
 
 
 ##############################################################################################  Fuction for call
-def PathLaunch(filepath,message,call):
+def PathLaunch(filepath, message, call):
     if (os.path.exists(filepath)):
-        os.startfile(filepath)
+        # os.startfile(filepath)
+        print("Старт")
         bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен")
     return
 #################################################################################################################
-##
-#                SHABLON 1
-# def user_answer_for_PDF(message):
-#     open_dir = str(message.text)
-#     if os.path.exists(open_dir):
-#         for file_name in os.listdir(open_dir):
-#             if fnmatch.fnmatch(file_name, '*.rvt'):
-#                 print(file_name)
-#                 bot.send_message(message.chat.id, file_name)
-#
-#
-#
-# ##  end PROCESS
-#         filepath = os.path.join(open_dir + "\ExportToPDF.bat")
-#         PathLaunch(filepath, message, "PDF")
-#         print("PDF")
-#     else:
-#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-###########################################################################################
-#            SHABLON 2
-# def user_answer_for_PDF(message):
-#     open_dir = str(message.text)
-#     if os.path.exists(open_dir):
 
 
 
-##  end PROCESS
-    #     filepath = os.path.join(open_dir + "\ExportToPDF.bat")
-    #     PathLaunch(filepath, message, "PDF")
-    #     print("PDF")
-    #
-    #         for direction in filepath:
-    #             direction = sys.stdin.readlines()
-    #             print(direction)
-    #
-    #
-    #
-    #     result=bot.send_message(message.chat.id, "Выберите файлы:")
-    #     bot.register_next_step_handler(result, func_for_keyboard)
-    #
-    #
-    #
-    # else:
-    #     bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+################################################################
+# def SortRevitNameFiles():
+#     return
+#################################################################
 
-###########################################################################################
+
+
+
+
+
+#####################################################################################################
 def user_answer_for_PDF(message):
     open_dir = str(message.text)
     if os.path.exists(open_dir):
-        filepath = os.path.join(open_dir, "ExportToPDF.bat")
+
+        #  SCAN DIR FOR REVIT
+        # listPaths = SortRevitNameFiles()
+
+        filepath = os.path.join(open_dir + "\ExportToPDF.bat")
         PathLaunch(filepath, message, "PDF")
-        # print("PDF")
-
-        with subprocess.Popen(filepath, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as proc:
-
-
-
-            outs, errs = proc.communicate(timeout=5)
-            print("PDF")
-            with open(newfile, 'wb') as file:
-                file.write(outs)
-                print("Yes")
-
-
-
-
-        # result=bot.send_message(message.chat.id, "Выберите файлы:")
-        # bot.register_next_step_handler(result, func_for_keyboard)
-
-
-
+        print("PDF")
+        result = bot.send_message(message.chat.id, "Выберите файлы:")
+        bot.register_next_step_handler(result, func_for_keyboard)
 
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return
 
 ###############################################################################################################
+
+###########################################################################################################
 def func_for_keyboard(message):
     number_of_file = str(message.text)
-    if number_of_file >"0":
+    if number_of_file > "0":
         keyboard.write(number_of_file)
         press('enter')
         console_a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
@@ -208,50 +163,43 @@ def func_for_keyboard(message):
         press('enter')
         bot.send_message(message.chat.id, f"Операция по выгрузке запущена")
     else:
-        console_b=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
+        console_b = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
         bot.register_next_step_handler(console_b, func_for_keyboard)
+
+    return
+
 #############################################################################################################
 
 
 
 
+### #######################################     URL for BOT       #################################################
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-###      URL for BOT
-
-url_BIM360="https://insight.b360.eu.autodesk.com/accounts/bf8a62b2-d479-4c2e-8523-103a1de299ea/projects/7a15c326-d421-4efb-98cd-fa817eb95f96/home"
-url_Google_Sheets="https://docs.google.com/spreadsheets/d/1tbvsFXLMzuKftQu9LV9jQ4FD6ik_l5yP-XRrhQsCrvw/edit?usp=sharing"
-url_Yandex_Disk="https://disk.yandex.kz/client/disk?utm_source=main_stripe_big_more"
-url_BI_Design="https://design.bi.group/"
-url_Google_Docs="https://docs.google.com/spreadsheets/d/1WesHLNRMiR5OOTFm0-t-VFiDfdix1NWCtgoqZq52nFI/edit#gid=0"
-
+url_BIM360 = "https://insight.b360.eu.autodesk.com/accounts/bf8a62b2-d479-4c2e-8523-103a1de299ea/projects/7a15c326-d421-4efb-98cd-fa817eb95f96/home"
+url_Google_Sheets = "https://docs.google.com/spreadsheets/d/1tbvsFXLMzuKftQu9LV9jQ4FD6ik_l5yP-XRrhQsCrvw/edit?usp=sharing"
+url_Yandex_Disk = "https://disk.yandex.kz/client/disk?utm_source=main_stripe_big_more"
+url_BI_Design = "https://design.bi.group/"
+url_Google_Docs = "https://docs.google.com/spreadsheets/d/1WesHLNRMiR5OOTFm0-t-VFiDfdix1NWCtgoqZq52nFI/edit#gid=0"
 ##################################################################################################################################
 @bot.message_handler(commands=['url'])
 def website(message):
     markup = types.InlineKeyboardMarkup(row_width=3)
     button_for_bim360 = types.InlineKeyboardButton("BIM360", url=url_BIM360)
     button_for_Google_Sheets = types.InlineKeyboardButton("Google Sheets", url=url_Google_Sheets)
-    button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk",url=url_Yandex_Disk)
+    button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk", url=url_Yandex_Disk)
     button_for_BI_Design = types.InlineKeyboardButton("BIDesign", url=url_BI_Design)
-    button_for_Google_Docs = types.InlineKeyboardButton("Google Docs",url=url_Google_Docs)
-    markup.add(button_for_bim360, button_for_Google_Sheets, button_for_BI_Design, button_for_Yandex_Disk,button_for_Google_Docs)
+    button_for_Google_Docs = types.InlineKeyboardButton("Google Docs", url=url_Google_Docs)
+    markup.add(button_for_bim360, button_for_Google_Sheets, button_for_BI_Design, button_for_Yandex_Disk,
+               button_for_Google_Docs)
     bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
+
+    return
+
 ####################################################################################################################################
 
-
 bot.polling(none_stop=True)
+#######################################################################################################
+
 
 # It needs for save, because maybe mistakes##################
 ###Fuck you
@@ -314,7 +262,7 @@ bot.polling(none_stop=True)
 #
 #     else:
 #         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-#
+
 #
 # #
 # def func_for_keyboard(message):

@@ -1,3 +1,4 @@
+
 config ={
     'name': "@zserdxbot",
     "token": "5357562508:AAGRmz_kvhoYqV0ZpBgxufOWOxgQQ5ITrDI",
@@ -5,4 +6,3 @@ config ={
 }
 
 
-#https://github.com/TokmyrzaBatyrkhan/telegram-tms-bot.git
