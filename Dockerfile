@@ -6,7 +6,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-CMD [ "python", "main.py" ]
+CMD [ "python", "TelegramBot.py" ]
 
 # Настроить и активировать виртуальную среду
 # ENV VIRTUAL_ENV "/venv"
