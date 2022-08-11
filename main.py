@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -12,6 +11,7 @@ from telebot import types
 #    My libraries
 import configure  #### Library for Token
 import authentication   #### Library Protect ID
+import RevitSortFiles
 
 
 
@@ -88,7 +88,6 @@ def callback(call):
 
 ##################################################################################################################
 
-
 '''DWG CONVERTER'''
 
 ###############################################################################
@@ -108,12 +107,16 @@ def user_answer_for_DWG(message):
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
 ###############################################################################
-#                                NWC CONVERTER
+
+'''Navisworks CONVERTER'''
+
 ###############################################################################
 
 def user_answer_for_NWC(message):
     open_dir = str(message.text)
+
     if os.path.exists(open_dir):
+
 
         #  SCAN DIR FOR REVIT
         # listPaths = SortRevitNameFiles()
@@ -128,18 +131,25 @@ def user_answer_for_NWC(message):
     return
 
 ##################################################################################################################
-#                                PDF CONVERTER
+
+'''PDF CONVERTER'''
+
 #####################################################################################################
 def user_answer_for_PDF(message):
-    open_dir = str(message.text)
-    if os.path.exists(open_dir):
+    input_path = os.path.realpath(message.text)
+    if os.path.exists(input_path):
+        print(input_path)
 
         #  SCAN DIR FOR REVIT
-        # listPaths = SortRevitNameFiles()
+        listPaths = RevitSortFiles.get_result_rvt_path_list(input_path)
 
-        filepath = os.path.join(open_dir + "\ExportToPDF.bat")
+        print(listPaths)
+
+        filepath = os.path.join(input_path + "\ExportToPDF.bat")
+
         PathLaunch(filepath, message, "PDF")
         print("PDF")
+
         result = bot.send_message(message.chat.id, "Выберите файлы:")
         bot.register_next_step_handler(result, func_for_keyboard)
 
@@ -153,17 +163,13 @@ def user_answer_for_PDF(message):
 ##############################################################################################
 def PathLaunch(filepath, message, call):
     if (os.path.exists(filepath)):
-        os.startfile(filepath)
+        # os.startfile(filepath)
         print("Старт")
         bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен")
     return
 #################################################################################################################
 
-#                                -DEF- TO Sort files
-################################################################
-# def SortRevitNameFiles():
-#     return
-#################################################################
+
 
 
 

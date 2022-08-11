@@ -1,6 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import asyncio
 import os
 from collections import defaultdict
+
+import main
 
 enable = True
 generalDict = defaultdict(list)
@@ -10,6 +15,7 @@ session = os.getenv('IMGUR_CLIENT_ID')
 async def CallTelegramBotBasic(session):
     # dictItem = importModule
     # Logic TelegramBot
+    print (type(main.start))
     return
 
 
