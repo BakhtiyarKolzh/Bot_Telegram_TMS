@@ -1,6 +1,8 @@
 
 
 
+
+
 ########################################################################
 
 ##         FLAG
@@ -123,3 +125,34 @@
         # bot.send_message(message.chat.id, file_name)
         ##  end PROCESS
  ###########################################################################################################
+
+
+
+#2022-08-12
+
+#                                -DEF- FOR Keyboard control
+########################################################################################################################
+# def func_for_keyboard(message):
+#     number_of_file = str(message.text)
+#     if number_of_file > "0":
+#         keyboard.write(number_of_file)
+#         press('enter')
+#         console_a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
+#         bot.register_next_step_handler(console_a, func_for_keyboard)
+#     elif number_of_file == "0":
+#         keyboard.write("0")
+#         press('enter')
+#         bot.send_message(message.chat.id, f"Операция по выгрузке запущена")
+#     elif number_of_file == "-":
+#         keyboard.write("-")
+#         press('enter')
+#         bot.send_message(message.chat.id, f"Выполнена отмена операции по запуску")
+#     else:
+#         console_b = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
+#         bot.register_next_step_handler(console_b, func_for_keyboard)
+#     return
+
+########################################################################################################################
+
+# i = bot.send_message(call.message.chat.id, 'текст')
+# print(i)
