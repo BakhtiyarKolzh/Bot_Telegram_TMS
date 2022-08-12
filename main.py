@@ -35,5 +35,3 @@ async def MainGeneralFunction(session, generalDict):
 if __name__ == "__main__":
     MainGeneralFunction(session, generalDict)
 
-    #######################################################
-    ########################

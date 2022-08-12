@@ -59,12 +59,9 @@ def get_rvt_paths_by_directory(directory):
                 if detach.match(name): continue
                 if (0 < name.find('#')): continue
                 path = os.path.join(directory, filename)
-                revit_paths.append(os.path.abspath(path))
-                try:
-                    get_basename(path)
-                    print("not mistake")
-                except Exception as exc:
-                    print(exc)
+                path = os.path.abspath(path)
+                revit_paths.append(path)
+                print(path)
 
     return revit_paths
 
@@ -72,14 +69,20 @@ def get_rvt_paths_by_directory(directory):
 def get_result_rvt_path_list(project_dir_path):
     revit_paths = []
     source = get_revit_directories(project_dir_path)
+    print("source: - " + source)
     if isinstance(source, str):
-        revit_paths.extend(get_rvt_paths_by_directory(source))
+        temp = get_rvt_paths_by_directory(source)
+        print("temp: - " + str(temp))
+        revit_paths.extend(temp)
     if isinstance(source, list):
-        [revit_paths.append(get_rvt_paths_by_directory(dir)) for dir in source]
+        temp = [get_rvt_paths_by_directory(dir) for dir in source]
+        print("temp: - " + str(temp))
+        revit_paths.append(temp)
 
+    revit_paths.sort(key=lambda x: get_basename(x))
+    print("sort: - " + str(revit_paths))
     return revit_paths
-    # return natsorted(revit_paths, key=lambda x: get_basename(x))
-    # ОШИБКА
+
 
 
 def get_numeric_revit_path_list(revit_paths):
