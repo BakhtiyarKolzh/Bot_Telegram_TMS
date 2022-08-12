@@ -35,7 +35,7 @@
 
 
 ##
-#                SHABLON 1
+#                SHABLON 1         scan dir
 # def user_answer_for_PDF(message):
 #     open_dir = str(message.text)
 #     if os.path.exists(open_dir):
