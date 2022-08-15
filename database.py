@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import os
 import uuid
 import json
-import os.path
+import time, random
+from collections import OrderedDict
+from multiprocessing import Lock
 
-import pytest as pytest
+database = OrderedDict()
+LIST = "qwertyuiopasdfghjklzxcvbnm"
+mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
-DATA = dict()
-dir_path = os.path.dirname(os.path.realpath(__file__))
-data_path = os.path.join(dir_path, "data_file.json")
+
+def create_session():
+    return str(uuid.uuid1())
 
 
 def add_item_to_dictionary(data, key, value):
@@ -24,11 +28,12 @@ def update_item_to_dictionary(data, key, value):
         return data
 
 
-def pop_item_from_dictionary(data, key=0):
-    if key is not None and key in data.keys():
-        return data.pop(key)
-    for k in data.keys():
-        return data.pop(k)
+def pop_item_from_dictionary(data):
+    global database
+    result = data.popitem(last=False)
+    if isinstance(data, dict):
+        database = data
+    return result
 
 
 class ComplexEncoder(json.JSONEncoder):
@@ -38,8 +43,8 @@ class ComplexEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-complex_json = json.dumps(DATA, cls=ComplexEncoder)
-ComplexEncoder().encode(DATA)
+complex_json = json.dumps(database, cls=ComplexEncoder)
+ComplexEncoder().encode(database)
 
 
 def remove_file(path):
@@ -51,7 +56,8 @@ def remove_file(path):
     return True
 
 
-def write_json_data(path, data):
+def write_json_data(path, data, rewrite=True):
+    if rewrite and os.path.exists(path): remove_file(path)
     if isinstance(data, dict):
         try:
             with open(path, "w") as file:
@@ -67,75 +73,56 @@ def deserialize_json_data(path):
             with open(path, "r") as file:
                 return json.load(file)
         except Exception as e:
-            print(e)
-    return True
-
-
-def pop_item_from_store(path, key):
-    data = deserialize_json_data(path)
-    if isinstance(data, dict):
-        if key in data.keys():
-            remove_file(path)
-            value = data.pop(key)
-            write_json_data(path, data)
-            return value
+            return print("Error: {}".format(e))
 
 
 def update_json_data(path, data):
     store = deserialize_json_data(path)
-    if store is None: print("store is none")
-    data = (store | data if store else data)
-    if data is None: print("Is not update")
-    if isinstance(data, dict) and remove_file(path):
-        if not os.path.exists(path):
-            write_json_data(path, data)
+    data = (store | data if isinstance(store, dict) else data)
+    if isinstance(data, dict):
+        write_json_data(path, data, True)
+        print("Completed")
     return data
 
 
-session = uuid.uuid1()
-control = str(12345)
-commands = ["her", "nan", "python", "add"]
-
-guidValue01 = 1
-dictValue01 = ["her", "nan", "python", "add"]
-
-guidValue02 = 2
-dictValue02 = ["rev", "sec", "sharp", "pop"]
-
-guidValue03 = 3
-dictValue03 = ["ber", "mem", "java", "remove"]
-
-guidValue04 = 4
-dictValue04 = ["ser", "sen", "cmd", "update"]
-
-guidValue05 = 5
-dictValue05 = ["ser", "sen", "cmd", "update"]
+def write_command_data(path, data, control, commands):
+    action = list()
+    action.append(control)
+    action.extend(commands)
+    session = create_session()
+    data = add_item_to_dictionary(data, session, action)
+    return update_json_data(path, data)
 
 
-# general_data = add_item_to_dictionary(general_data, guidValue01, dictValue01)
-# general_data = add_item_to_dictionary(general_data, guidValue02, dictValue02)
-# general_data = add_item_to_dictionary(general_data, guidValue03, dictValue03)
-#
-# general_data = update_item_to_dictionary(general_data, guidValue03, dictValue02)
-# general_data = update_item_to_dictionary(general_data, guidValue02, dictValue01)
-# general_data = update_item_to_dictionary(general_data, guidValue01, dictValue03)
-# general_data = update_item_to_dictionary(general_data, guidValue04, dictValue04)
-# general_data = update_item_to_dictionary(general_data, guidValue05, dictValue05)
-# update_json_data(data_path, general_data)
-
-# pop_item_from_dictionary(general_data)
-# print(pop_item_from_store(data_path, str(5)))
-# pop_item_from_dictionary(general_data)
-
-
-def set_input_data(data, control, commands):
-    session = uuid.uuid1()
-    action = add_item_to_dictionary(dict(), control, commands)
-    return add_item_to_dictionary(data, session, action)
+def execute_command(path, data):
+    while len(data):
+        result = pop_item_from_dictionary(data)
+        if write_json_data(path, data, True):
+            session, action = result
+            if isinstance(action, list):
+                control = action.pop(0)
+                for param in commands:
+                    if param.is_integer():
+                        value = int(param)
+                        time.sleep(0.5)
+                        print(value)
+    return True
 
 
 
-result = deserialize_json_data(data_path)
-print("result store: - " + str(result))
-print(type(result))
-print(session)
+def execute_command_process(path, data, control, commands):
+    with Lock():
+        data = write_command_data(path, data, control, commands)
+        if isinstance(data, OrderedDict) and len(data):
+            return execute_command(path, data)
+    return
+
+
+for x in range(5):
+    control = str(random.randint(100, 1000))
+    commands = [random.choice(LIST) for i in range(5)]
+    execute_command_process(mypath, database, control, commands)
+
+
+print("DATA: " + str(database))
+print(type(database))
