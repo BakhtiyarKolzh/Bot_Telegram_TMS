@@ -5,8 +5,6 @@ import codecs
 import os
 import re
 
-from natsort import natsorted
-
 ########################################################################################################################
 
 
@@ -59,44 +57,48 @@ def get_rvt_paths_by_directory(directory):
                 if detach.match(name): continue
                 if (0 < name.find('#')): continue
                 path = os.path.join(directory, filename)
-                revit_paths.append(os.path.abspath(path))
-                try:
-                    get_basename(path)
-                    print("not mistake")
-                except Exception as exc:
-                    print(exc)
+                path = os.path.abspath(path)
+                revit_paths.append(path)
+                print(path)
 
     return revit_paths
 
 
 def get_result_rvt_path_list(project_dir_path):
     revit_paths = []
-    source = get_revit_directories(project_dir_path)
-    if isinstance(source, str):
-        revit_paths.extend(get_rvt_paths_by_directory(source))
-    if isinstance(source, list):
-        [revit_paths.append(get_rvt_paths_by_directory(dir)) for dir in source]
+    dir_source = get_revit_directories(project_dir_path)
+    print("source: - " + str(dir_source))
+    if isinstance(dir_source, str):
+        temp_list = get_rvt_paths_by_directory(dir_source)
+        print("temp: - " + str(temp_list))
+        revit_paths.extend(temp_list)
+    if isinstance(dir_source, list):
+        for dir in dir_source:
+            temp_list = get_rvt_paths_by_directory(dir)
+            print("temp: - " + str(temp_list))
+            revit_paths.extend(temp_list)
 
+    revit_paths.sort(key=lambda x: get_basename(x))
+    revit_paths = numerate_path_list(revit_paths)
+    write_revit_path_list_file(revit_paths)
     return revit_paths
-    # return natsorted(revit_paths, key=lambda x: get_basename(x))
-    # ОШИБКА
 
 
-def get_numeric_revit_path_list(revit_paths):
+def numerate_path_list(line_list):
     result = []
-    for i, filepath in enumerate(revit_paths):
-        path = str(i + 1) + ".\t" + get_basename(filepath)
-        result.append(path)
-        print(path)
-    return
+    for i, path in enumerate(line_list):
+        line = str(i + 1) + ". " + get_basename(path)
+        result.append(line)
+        print(line)
+    return result
 
 
-def write_revit_path_list_file(revit_paths):
+def write_revit_path_list_file(paths):
     directory = os.path.dirname(os.path.dirname(os.path.realpath(os.getcwd())))
     output_path = os.path.join(directory, 'revit_file_list.txt')
     print('Revit files list located path is: ' + str(output_path) + '\n')
-    with codecs.open(output_path, mode='w', encoding='utf-8', errors='ignore') as f:
-        [f.write(item + "\n") for item in revit_paths]
+    with codecs.open(output_path, mode='w', encoding='utf-8', errors='ignore') as file:
+        [file.write(item + "\n") for item in paths]
     return
 
 

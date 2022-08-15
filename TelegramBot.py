@@ -3,8 +3,6 @@
 
 import os
 import os.path
-import keyboard
-from keyboard import press
 import telebot
 from telebot import types
 
@@ -40,18 +38,13 @@ def some(message):
 
 ########################################################################################################################
 
+
 #                                   ----start Telegram bot----
 ########################################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
     bot.send_message(message.chat.id, welcome, parse_mode='html')
-
-    menu_for_button = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["/print", "/url"]
-    for button in buttons:
-        menu_for_button.add(types.KeyboardButton(button))
-    bot.send_message(message.chat.id, "Выберите подходящую команду:", reply_markup=menu_for_button)
 
     return
 
@@ -62,16 +55,18 @@ def start(message):
 @bot.message_handler(commands=['print'])
 def export_par(message):
     markup = types.InlineKeyboardMarkup(row_width=3)
-    button_DWG = types.InlineKeyboardButton('DWG', callback_data="DWG")
-    button_NWC = types.InlineKeyboardButton('NWC', callback_data="NWC")
-    button_PDF = types.InlineKeyboardButton('PDF', callback_data="PDF")
+    button_DWG = types.InlineKeyboardButton('DWG', callback_data="DWG", id=12)
+    button_NWC = types.InlineKeyboardButton('NWC', callback_data="NWC", id=12)
+    button_PDF = types.InlineKeyboardButton('PDF', callback_data="PDF", id=12)
     markup.add(button_DWG, button_NWC, button_PDF)
+
     bot.send_message(message.chat.id, "Выберите формат для перевода данных:", reply_markup=markup)
     return
 
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
-    if call.message:
+    if call.message.chat.id:
         if call.data == 'DWG':
             dir_for_DWG = bot.send_message(call.message.chat.id, 'Введите путь для DWG')
             bot.register_next_step_handler(dir_for_DWG, user_answer_for_DWG)
@@ -101,7 +96,7 @@ def user_answer_for_DWG(message):
         PathLaunch(filepath, message, "DWG")
         print("DWG")
         result = bot.send_message(message.chat.id, "Выберите файлы:")
-        bot.register_next_step_handler(result, func_for_keyboard)
+        # bot.register_next_step_handler(result, func_for_keyboard)
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
@@ -110,7 +105,7 @@ def user_answer_for_DWG(message):
 '''Navisworks CONVERTER'''
 
 ########################################################################################################################
-########################################################################################################################
+
 def user_answer_for_NWC(message):
     open_dir = str(message.text)
 
@@ -124,16 +119,22 @@ def user_answer_for_NWC(message):
         PathLaunch(filepath, message, "NWC")
         print("NWC")
         result = bot.send_message(message.chat.id, "Выберите файлы:")
-        bot.register_next_step_handler(result, func_for_keyboard)
+        # bot.register_next_step_handler(result, func_for_keyboard)
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
 
 ########################################################################################################################
-
+########################################################################################################################
 '''PDF CONVERTER'''
 
 ####################################################
+def new_func(message):
+    number_of_file = str(message.text)
+    print(number_of_file)
+    pass
+
+
 def user_answer_for_PDF(message):
     input_path = os.path.realpath(message.text)
     if os.path.exists(input_path):
@@ -150,14 +151,13 @@ def user_answer_for_PDF(message):
         print("PDF")
 
         result = bot.send_message(message.chat.id, "Выберите файлы:")
-        bot.register_next_step_handler(result, func_for_keyboard)
+        bot.register_next_step_handler(result, new_func)
 
     else:
         bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
 
 ####################################################
-
 
 
 
@@ -171,29 +171,31 @@ def PathLaunch(filepath, message, call):
     return
 ########################################################################################################################
 
-#                                -DEF- FOR Keyboard control
-########################################################################################################################
-def func_for_keyboard(message):
-    number_of_file = str(message.text)
-    if number_of_file > "0":
-        keyboard.write(number_of_file)
-        press('enter')
-        console_a = bot.send_message(message.chat.id, f"Выбана секция {number_of_file}")
-        bot.register_next_step_handler(console_a, func_for_keyboard)
-    elif number_of_file == "0":
-        keyboard.write("0")
-        press('enter')
-        bot.send_message(message.chat.id, f"Операция по выгрузке запущена")
-    elif number_of_file == "-":
-        keyboard.write("-")
-        press('enter')
-        bot.send_message(message.chat.id, f"Выполнена отмена операции по запуску")
-    else:
-        console_b = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!!")
-        bot.register_next_step_handler(console_b, func_for_keyboard)
-    return
 
-########################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #                                BUTTON FOR -url-
 ########################################################################################################################
@@ -215,7 +217,7 @@ def website(message):
 
 
 
-#-------------------------------------------OUT --------------------
+#-------------------------------------------OUT ------------------------------------------------------------------------
 
 bot.polling(none_stop=True)
 ########################################################################################################################
