@@ -7,10 +7,6 @@ import time, random
 from collections import OrderedDict
 from multiprocessing import Lock
 
-database = OrderedDict()
-LIST = "qwertyuiopasdfghjklzxcvbnm"
-mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
-
 
 def create_session():
     return str(uuid.uuid1())
@@ -41,10 +37,6 @@ class ComplexEncoder(json.JSONEncoder):
         if isinstance(obj, complex):
             return [obj.real, obj.imag]
         return json.JSONEncoder.default(self, obj)
-
-
-complex_json = json.dumps(database, cls=ComplexEncoder)
-ComplexEncoder().encode(database)
 
 
 def remove_file(path):
@@ -85,44 +77,49 @@ def update_json_data(path, data):
     return data
 
 
-def write_command_data(path, data, control, commands):
-    action = list()
-    action.append(control)
-    action.extend(commands)
-    session = create_session()
-    data = add_item_to_dictionary(data, session, action)
-    return update_json_data(path, data)
+def save_command_data(path, data, filepath, control_id, commands):
+    with Lock():
+        action = list()
+        action.append(filepath)
+        action.append(control_id)
+        if isinstance(commands, list): action.extend(commands)
+        if not isinstance(commands, list): action.append(commands)
+        data = add_item_to_dictionary(data, create_session(), action)
+        return update_json_data(path, data)
 
 
 def execute_command(path, data):
-    while len(data):
-        result = pop_item_from_dictionary(data)
-        if write_json_data(path, data, True):
-            session, action = result
-            if isinstance(action, list):
-                control = action.pop(0)
-                for param in commands:
-                    if param.is_integer():
-                        value = int(param)
-                        time.sleep(0.5)
-                        print(value)
-    return True
-
-
-
-def execute_command_process(path, data, control, commands):
     with Lock():
-        data = write_command_data(path, data, control, commands)
-        if isinstance(data, OrderedDict) and len(data):
-            return execute_command(path, data)
-    return
+        commands = []
+        while len(data):
+            time.sleep(5)
+            commands = pop_item_from_dictionary(data)
+            if write_json_data(path, data, True):
+                session, action = commands
+                if isinstance(action, list):
+                    filepath = action.pop(0)
+                    control = action.pop(0)
+                    for val in commands:
+                        if isinstance(val, int):
+                            commands.append(val)
+                        elif isinstance(val, str) and val.isdigit():
+                            commands.append(int(val))
+                    print(commands)
+                    print(filepath)
+                    print(control)
+                    print("\t")
+    return len(commands)
 
+
+database = OrderedDict()
+CNTRL = ["DWG", "NWC", "IFC", "PDF"]
+mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
 for x in range(5):
-    control = str(random.randint(100, 1000))
-    commands = [random.choice(LIST) for i in range(5)]
-    execute_command_process(mypath, database, control, commands)
-
+    time.sleep(5)
+    control = random.choice(CNTRL)
+    commands = [str(random.randint(0, 10)) for i in range(5)]
+    save_command_data(mypath, database, mypath, control, commands)
+    execute_command(mypath, database)
 
 print("DATA: " + str(database))
-print(type(database))

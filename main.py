@@ -1,42 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import asyncio
-import os
-from collections import defaultdict
 
+import os
+import asyncio
+from collections import OrderedDict
+
+import database
 import TelegramBot
 
-enable = True
-generalDict = defaultdict(list)
-session = os.getenv('IMGUR_CLIENT_ID')
+database_dict = OrderedDict()
+database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
 
-async def CallTelegramBotBasic(session):
-    # dictItem = importModule
-    # Logic TelegramBot
-    print (type(TelegramBot.start))
-    return
+def call_telegram():
+    return TelegramBot.start
 
 
-async def ActionFunction(generalDict):
-    while enable:
-        await asyncio.sleep(5)
-        if len(generalDict) != 0:
-            # Execute Action BatFile StartFile
-            await asyncio.sleep(1000)
+async def execute(data):
+    while True:
+        await asyncio.sleep(1000)
+        if isinstance(data, OrderedDict) and len(data):
+            database.execute_command(database_path, data)
+            print("Commands length count {}".format(len(data)))
+            await asyncio.sleep(300)
 
 
-
-async def MainGeneralFunction(session, generalDict):
-    await CallTelegramBotBasic(session)
-    await ActionFunction(generalDict)
+async def run(data):
+    await execute(data)
+    await call_telegram()
 
 
 if __name__ == "__main__":
-    MainGeneralFunction(session, generalDict)
-
-    #######################################################
-    ################################################################
-    ###############################################################################
-    #######################################
+    run(database_dict)
