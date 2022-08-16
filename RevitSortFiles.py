@@ -100,12 +100,10 @@ def numerate_path_list(line_list):
     return result
 
 
-def write_revit_path_list_file(paths):
-    directory = os.path.dirname(os.path.dirname(os.path.realpath(os.getcwd())))
-    output_path = os.path.join(directory, 'revit_file_list.txt')
-    with codecs.open(output_path, mode='w', encoding='utf-8', errors='ignore') as file:
+def write_revit_path_list_to_file(filepath, paths):
+    with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as file:
         [file.write(item + "\n") for item in paths]
-    return
+    return os.path.isfile(filepath)
 
 
 def retrieve_paths(paths, commands):
