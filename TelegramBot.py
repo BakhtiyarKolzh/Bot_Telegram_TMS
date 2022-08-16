@@ -13,6 +13,8 @@ import authentication  #### Library Protect ID
 import configure  #### Library for Token
 import database
 
+
+
 #                                       INPUT DATES
 ########################################################################################################################
 bot = telebot.TeleBot(configure.config["token"])
@@ -72,15 +74,6 @@ def start_task(message):
 
     return
 
-
-def start_url(message):
-    if message.chat.type == "private":
-        if message.text == "URL":
-            print('s')
-            result = bot.send_message(message.chat.id, "В")
-            bot.register_next_step_handler(result, website)
-
-    return
 
 
 ########################################################################################################################
@@ -202,7 +195,7 @@ def user_answer_for_PDF(message):
         print("PDF")
         menu_for_button(message)
 
-        # bot.register_next_step_handler(result, new_func)
+
     else:
         filepath = None
         result = bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
@@ -234,20 +227,9 @@ def path_launch(filepath, message, call):
 ########################################################################################################################
 ########################################################################################################################
 
-'''SELECT A SECTION --- def'''
 
 
-def new_func(message):
-    global commands
-    commands = list()  # int types
 
-    number_of_file = message.text if isinstance(message.text, int) else None
-
-    print(number_of_file)
-    call_button_ok(message)
-    # result = bot.send_message(message.chat.id, f"Выберана секция {number_of_file}")
-    # bot.register_next_step_handler(result, Call_button_ok)
-    return
 
 
 ########################################################################################################################
@@ -274,12 +256,17 @@ def menu_for_button(message):
 
 def select_button(message):
     if message.text == "Выбор файлов":
-        bot.send_message(message.chat.id, "СПИСОК ФАЙЛОВ ПОДАН, ВЫБЕРИТЕ НЕОБХОДИМЫЕ")
-        call_button_ok(message)  ###### переместить в функицю по выбору файлов
+        result=bot.send_message(message.chat.id, "СПИСОК ФАЙЛОВ ПОДАН, ВЫБЕРИТЕ НЕОБХОДИМЫЕ")
+        bot.register_next_step_handler(result, new_func)
+        # new_func(message)
+           ###### переместить в функицю по выбору файлов
+        func_zero(message)
 
     elif message.text == "Выбрать все файлы":
-        bot.send_message(message.chat.id, "ВСЕ ФАЙЛЫ ВЫБРАНЫ")
-        start(message)  #####   нужна директория и функция для выбора всех файлов
+        # result=bot.send_message(message.chat.id, "ВСЕ ФАЙЛЫ ВЫБРАНЫ")
+        # bot.register_next_step_handler(result, all_files_func)
+        ################        FUnc for select section
+        all_files_func(message)
 
     elif message.text == "ОТМЕНА":
         bot.send_message(message.chat.id, " ОПЕРАЦИЯ ОТМЕНЕНА")
@@ -294,7 +281,7 @@ def select_button(message):
 ########################################################################################################################
 ########################################################################################################################
 
-'''kEYBOARD OK'''
+'''kEYBOARD OK and OTMENA'''
 
 
 @bot.message_handler(content_types=['text'])
@@ -304,8 +291,8 @@ def call_button_ok(message):
     button_name_close = types.KeyboardButton('ОТМЕНА')
     markup.add(button_name_ok, button_name_close)
 
-    result = bot.send_message(message.chat.id, "Подтвердите операцию нажав ОК, если оперцию нужно отменить Отмена",
-                              reply_markup=markup)
+    msm = "Подтвердите операцию нажав ОК, если оперцию нужно отменить Отмена"
+    result = bot.send_message(message.chat.id, msm, reply_markup=markup)
     bot.register_next_step_handler(result, button_ok)
 
     return
@@ -331,28 +318,98 @@ def button_ok(message):
 
 ########################################################################################################################
 ########################################################################################################################
+'''SELECT A SECTION --- def'''
+
+
+def new_func(message):
+    global commands
+    commands = list()  # int types
+    number = message.text
+
+    number = -1 if isinstance(number, str) and not number.isdigit() else number
+    number = int(number) if isinstance(number, str) else number
+
+    print(number)
+
+    # commands = message.text
+
+    if number != 0:
+        result = bot.send_message(message.chat.id, f"Выберана секция {number}")
+        bot.register_next_step_handler(result, new_func)
+        print(commands)
+    elif number == 0:
+        number = 0
+        result = bot.send_message(message.chat.id, "Выбраны все секции")
+        bot.register_next_step_handler(result, func_zero)
+
+    return
+
+def all_files_func(message):
+    global commands
+    commands = list()  # int types
+    number = 0
+
+    number = -1 if isinstance(number, str) and not number.isdigit() else number
+    number = int(number) if isinstance(number, str) else number
+
+    print(number)
+    func_zero(message)
+
+
+
+
+
+
+########################################################################################################################
+########################################################################################################################
+'''SELECT BUTTON OK --- ZERO'''
+
+def func_zero(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_name_ok = types.KeyboardButton('ОК')
+    markup.add(button_name_ok)
+    result = bot.send_message(message.chat.id, "Подтвердите операцию нажав ОК",
+                              reply_markup=markup)
+    bot.register_next_step_handler(result, func_zero_button_ok)
+    return
+
+def func_zero_button_ok(message):
+    if message.text == 'ОК':
+        global filepath
+        global commands
+        global controlId
+        result=bot.send_message(message.chat.id, "Операция по выгрузке запущена")
+        database.save_command_data(database_path, filepath, controlId, commands)
+        bot.register_next_step_handler(result, start)
+
+    return
+########################################################################################################################
+########################################################################################################################
+
+
+
 
 
 '''BUTTON URL'''
 
 
 ########################################################################################################################
-def website(message):
-    markup = types.InlineKeyboardMarkup(row_width=3)
-
-    button_for_bim360 = types.InlineKeyboardButton("BIM360", url=url_BIM360)
-    button_for_Google_Sheets = types.InlineKeyboardButton("Google Sheets", url=url_Google_Sheets)
-    button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk", url=url_Yandex_Disk)
-    button_for_BI_Design = types.InlineKeyboardButton("BIDesign", url=url_BI_Design)
-    button_for_Google_Docs = types.InlineKeyboardButton("Google Docs", url=url_Google_Docs)
-    markup.add(button_for_bim360,
-               button_for_Google_Sheets,
-               button_for_BI_Design,
-               button_for_Yandex_Disk,
-               button_for_Google_Docs)
-    bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
-
-    return
+# def website(message):
+#     markup = types.InlineKeyboardMarkup(row_width=3)
+#
+#     button_for_bim360 = types.InlineKeyboardButton("BIM360", url=url_BIM360)
+#     button_for_Google_Sheets = types.InlineKeyboardButton("Google Sheets", url=url_Google_Sheets)
+#     button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk", url=url_Yandex_Disk)
+#     button_for_BI_Design = types.InlineKeyboardButton("BIDesign", url=url_BI_Design)
+#     button_for_Google_Docs = types.InlineKeyboardButton("Google Docs", url=url_Google_Docs)
+#     markup.add(button_for_bim360,
+#                button_for_Google_Sheets,
+#                button_for_BI_Design,
+#                button_for_Yandex_Disk,
+#                button_for_Google_Docs)
+#     bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
+#
+#     return
 
 
 ########################################################################################################################
