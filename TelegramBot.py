@@ -295,7 +295,7 @@ def call_button_ok(message):
     bot.register_next_step_handler(result, button_ok)
 
     return
-
+######
 
 def button_ok(message):
     if message.text == 'ОК':
@@ -340,7 +340,7 @@ def new_func(message):
         number = 0
         result = bot.send_message(message.chat.id, "Выбраны все секции")
         bot.register_next_step_handler(result, func_zero)
-
+    ######
     return
 
 def all_files_func(message):
