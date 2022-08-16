@@ -255,7 +255,6 @@ def new_func(message):
 
 '''Menu_for_button'''
 
-
 @bot.message_handler(content_types=['text'])
 def menu_for_button(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
