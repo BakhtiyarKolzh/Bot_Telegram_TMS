@@ -75,9 +75,10 @@ def update_json_data(path, data):
     return data
 
 
-def save_command_data(data_path, data, filepath, control_id, commands):
+def save_command_data(data_path, filepath, control_id, commands):
     with Lock():
         action = list()
+        data = OrderedDict()
         action.append(filepath)
         action.append(control_id)
         if isinstance(commands, list): action.extend(commands)
@@ -129,5 +130,5 @@ for x in range(7):
     control = random.choice(cmd)
     path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
     commands = [str(random.randint(0, 25)) for i in range(5)]
-    save_command_data(mypath, database, path, control, commands)
+    save_command_data(mypath, path, control, commands)
     if 5 < x: execute_commands(mypath, database)
