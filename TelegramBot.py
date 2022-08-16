@@ -105,6 +105,10 @@ def callback(message):
         dir_for_PDF = bot.send_message(message.chat.id, 'Введите путь для PDF')
         bot.register_next_step_handler(dir_for_PDF, user_answer_for_PDF)
 
+    else:
+        result=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
+        bot.register_next_step_handler(result, callback)
+
     return
 ########################################################################################################################
 ########################################################################################################################
@@ -129,7 +133,7 @@ def user_answer_for_DWG(message):
         result = bot.send_message(message.chat.id, "Выберите файлы:")
         # bot.register_next_step_handler(result, func_for_keyboard)
     else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+        bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
 ########################################################################################################################
 
@@ -152,7 +156,7 @@ def user_answer_for_NWC(message):
         result = bot.send_message(message.chat.id, "Выберите файлы:")
         # bot.register_next_step_handler(result, func_for_keyboard)
     else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+        bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
     return
 
 ########################################################################################################################
@@ -178,7 +182,7 @@ def user_answer_for_PDF(message):
         # bot.register_next_step_handler(result, new_func)
 
     else:
-        result=bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+        result=bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
         bot.register_next_step_handler(result, user_answer_for_PDF)
 
     return
@@ -242,7 +246,6 @@ def select_button(message):
         bot.send_message(message.chat.id, "СПИСОК ФАЙЛОВ ПОДАН, ВЫБЕРИТЕ НЕОБХОДИМЫЕ")
         call_button_ok(message)    ###### переместить в функицю по выбору файлов
 
-
     elif message.text == "Выбрать все файлы":
         bot.send_message(message.chat.id, "ВСЕ ФАЙЛЫ ВЫБРАНЫ")
         start(message)     #####   нужна директория и функция для выбора всех файлов
@@ -250,7 +253,9 @@ def select_button(message):
     elif message.text == "ОТМЕНА":
         bot.send_message(message.chat.id, " ОПЕРАЦИЯ ОТМЕНЕНА")
         start(message)
-
+    else:
+        result=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
+        bot.register_next_step_handler(result, select_button)
 
     return
 ########################################################################################################################
@@ -274,9 +279,12 @@ def button_ok(message):
     if message.text == 'ОК':
         bot.send_message(message.chat.id, "Операция по выгрузке запущена")
         start(message)
-    if message.text == 'ОТМЕНА':
+    elif message.text == 'ОТМЕНА':
         bot.send_message(message.chat.id, "Операция по выгрузке отменена")
         start(message)
+    else:
+        result=bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
+        bot.register_next_step_handler(result, button_ok)
 
     return
 
