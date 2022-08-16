@@ -19,16 +19,15 @@ def call_telegram():
 
 async def execute(data):
     while True:
-        await asyncio.sleep(1000)
-        if isinstance(data, OrderedDict) and len(data):
-            database.execute_command(database_path, data)
-            print("Commands length count {}".format(len(data)))
-            await asyncio.sleep(300)
+        await asyncio.sleep(30)
+        if not isinstance(data, OrderedDict): await asyncio.sleep(1200)
+        if isinstance(data, OrderedDict) and not len(data): await asyncio.sleep(900)
+        if isinstance(data, OrderedDict) and len(data): database.execute_commands(database_path, data)
 
 
 async def run(data):
-    await execute(data)
     await call_telegram()
+    await execute(data)
 
 
 if __name__ == "__main__":
