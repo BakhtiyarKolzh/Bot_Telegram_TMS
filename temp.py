@@ -13,14 +13,14 @@
 #         welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
 #         bot.send_message(message.chat.id, welcome, parse_mode='html')
 #
-#         menu_for_button = types.ReplyKeyboardMarkup(resize_keyboard=True)
-#         buttons = ["/print", "/url"]
-#         for button in buttons:
-#             menu_for_button.add(types.KeyboardButton(button))
-#         bot.send_message(message.chat.id, "Выберите подходящую команду:", reply_markup=menu_for_button)
-#     else:
-#         bot.send_message(message.chat.id, " ", reply_markup= menu_for_button)
-#         return
+    #     menu_for_button = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    #     buttons = ["/print", "/url"]
+    #     for button in buttons:
+    #         menu_for_button.add(types.KeyboardButton(button))
+    #     bot.send_message(message.chat.id, "Выберите подходящую команду:", reply_markup=menu_for_button)
+    # else:
+    #     bot.send_message(message.chat.id, " ", reply_markup= menu_for_button)
+    #     return
 # ###########################################################################
 #
 #
@@ -156,3 +156,37 @@
 
 # i = bot.send_message(call.message.chat.id, 'текст')
 # print(i)
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+
+
+# @bot.message_handler(commands=['print'])
+# def export_par(message):
+#     markup = types.InlineKeyboardMarkup(row_width=3)
+#     button_DWG = types.InlineKeyboardButton('DWG', callback_data="DWG", id=12)
+#     button_NWC = types.InlineKeyboardButton('NWC', callback_data="NWC", id=12)
+#     button_PDF = types.InlineKeyboardButton('PDF', callback_data="PDF", id=12)
+#     markup.add(button_DWG, button_NWC, button_PDF)
+#
+#     bot.send_message(message.chat.id, "Выберите формат для перевода данных:", reply_markup=markup)
+#     return
+#
+#
+# @bot.callback_query_handler(func=lambda call: True)
+# def callback(call):
+#     if call.message.chat.id:
+#         if call.data == 'DWG':
+#             dir_for_DWG = bot.send_message(call.message.chat.id, 'Введите путь для DWG')
+#             bot.register_next_step_handler(dir_for_DWG, user_answer_for_DWG)
+#
+#         elif call.data == 'NWC':
+#             dir_for_NWC = bot.send_message(call.message.chat.id, 'Введите путь для NWC')
+#             bot.register_next_step_handler(dir_for_NWC, user_answer_for_NWC)
+#
+#         elif call.data == 'PDF':
+#             dir_for_PDF = bot.send_message(call.message.chat.id, 'Введите путь для PDF')
+#             bot.register_next_step_handler(dir_for_PDF, user_answer_for_PDF)
+#     return
