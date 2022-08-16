@@ -156,7 +156,7 @@ def user_answer_for_NWC(message):
     return
 
 ########################################################################################################################
-'''PDF CONVERTER'''
+'''PDF CONVERTER'''         #  TEST Version ##########     Use only it
 
 
 def user_answer_for_PDF(message):
@@ -178,7 +178,9 @@ def user_answer_for_PDF(message):
         # bot.register_next_step_handler(result, new_func)
 
     else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+        result=bot.send_message(message.chat.id, "ОШИБКА ПУТИ, ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+        bot.register_next_step_handler(result, user_answer_for_PDF)
+
     return
 
 
