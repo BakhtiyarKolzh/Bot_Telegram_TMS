@@ -7,6 +7,8 @@ import time, random
 from collections import OrderedDict
 from multiprocessing import Lock
 
+import RevitSortFiles
+
 
 def create_session():
     return str(uuid.uuid1())
@@ -25,11 +27,7 @@ def update_item_to_dictionary(data, key, value):
 
 
 def pop_item_from_dictionary(data):
-    global database
-    result = data.popitem(last=False)
-    if isinstance(data, dict):
-        database = data
-    return result
+    if len(data): return data.popitem(last=False)
 
 
 class ComplexEncoder(json.JSONEncoder):
@@ -73,11 +71,11 @@ def update_json_data(path, data):
     data = (store | data if isinstance(store, dict) else data)
     if isinstance(data, dict):
         write_json_data(path, data, True)
-        print("Completed")
+        print("Save data count {}\n".format(len(data)))
     return data
 
 
-def save_command_data(path, data, filepath, control_id, commands):
+def save_command_data(data_path, data, filepath, control_id, commands):
     with Lock():
         action = list()
         action.append(filepath)
@@ -85,41 +83,51 @@ def save_command_data(path, data, filepath, control_id, commands):
         if isinstance(commands, list): action.extend(commands)
         if not isinstance(commands, list): action.append(commands)
         data = add_item_to_dictionary(data, create_session(), action)
-        return update_json_data(path, data)
+
+        return update_json_data(data_path, data)
 
 
-def execute_command(path, data):
+def read_command_data(data_path, data):
     with Lock():
         commands = []
-        while len(data):
-            time.sleep(5)
-            commands = pop_item_from_dictionary(data)
-            if write_json_data(path, data, True):
-                session, action = commands
-                if isinstance(action, list):
-                    filepath = action.pop(0)
-                    control = action.pop(0)
-                    for val in commands:
-                        if isinstance(val, int):
-                            commands.append(val)
-                        elif isinstance(val, str) and val.isdigit():
-                            commands.append(int(val))
-                    print(commands)
-                    print(filepath)
-                    print(control)
-                    print("\t")
-    return len(commands)
+        session, action = pop_item_from_dictionary(data)
+        if write_json_data(data_path, data, True):
+            if isinstance(action, list):
+                filepath = action.pop(0)
+                control = action.pop(0)
+                for val in action:
+                    num = None
+                    if isinstance(val, int): num = val
+                    if isinstance(val, str) and val.isdigit(): num = int(val)
+                    if num is not None and num not in commands: commands.append(num)
+
+                return filepath, control, commands
+
+
+def execute_commands(data_path, data):
+    for _ in range(len(data)):
+        result = read_command_data(data_path, data)
+        filepath, control, commands = result
+        paths = RevitSortFiles.get_result_rvt_path_list(filepath)
+        paths = RevitSortFiles.retrieve_paths(paths, commands)
+        if "DWG" == control: print("Set DWG")
+        if "NWC" == control: print("Set NWC")
+        if "IFC" == control: print("Set IFC")
+        if "PDF" == control: print("Set PDF")
+        [print(path) for path in paths]
+        print(commands)
+
+    return print("\n")
 
 
 database = OrderedDict()
-CNTRL = ["DWG", "NWC", "IFC", "PDF"]
+cmd = ["DWG", "NWC", "IFC", "PDF"]
 mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
-for x in range(5):
-    time.sleep(5)
-    control = random.choice(CNTRL)
-    commands = [str(random.randint(0, 10)) for i in range(5)]
-    save_command_data(mypath, database, mypath, control, commands)
-    execute_command(mypath, database)
-
-print("DATA: " + str(database))
+for x in range(7):
+    time.sleep(0.25)
+    control = random.choice(cmd)
+    path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
+    commands = [str(random.randint(0, 25)) for i in range(5)]
+    save_command_data(mypath, database, path, control, commands)
+    if 5 < x: execute_commands(mypath, database)
