@@ -102,4 +102,13 @@ def write_revit_path_list_file(paths):
     return
 
 
+def retrieve_paths(paths, nums):
+    output = list()
+    counts = len(paths)
+    if isinstance(paths, list):
+        for num in nums:
+            if isinstance(num, int) and counts < num:
+                output.append(paths[num - 1])
+    return output
+
 #######################################################################################################################
