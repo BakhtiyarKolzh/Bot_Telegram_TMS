@@ -89,21 +89,21 @@ def read_command_data(data_path, data):
 
 def run_cmd(control, paths):
     with Lock():
-        time.sleep(5)
+        time.sleep(30)
         global rvt_path_list_file
         RevitSortFiles.write_revit_path_list_to_file(rvt_path_list_file, paths)
         if "DWG" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportToDWGBot.bat")
+            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
             if os.path.exists(bat_file):
                 os.startfile(bat_file)
                 print("Set DWG")
         if "NWC" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportToNWCBot.bat")
+            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
             if os.path.exists(bat_file):
                 os.startfile(bat_file)
                 print("Set NWC")
         if "PDF" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportToPDFBot.bat")
+            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
             if os.path.exists(bat_file):
                 os.startfile(bat_file)
                 print("Set PDF")
@@ -134,10 +134,10 @@ database = OrderedDict()
 cmd = ["DWG", "NWC", "PDF"]
 mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
-for x in range(3):
+for x in range(10):
     control = random.choice(cmd)
     path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
-    commands = [str(random.randint(0, 25)) for i in range(5)]
+    commands = [random.randint(0, 25) for i in range(5)]
     save_command_data(mypath, path, control, commands)
     execute_commands(mypath)
 
