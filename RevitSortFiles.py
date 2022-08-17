@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from natsort import natsorted
+from pathlib import WindowsPath
 import codecs
 import os
 import re
@@ -31,15 +31,9 @@ def get_basename(filepath):
     return filename
 
 
-def get_last_numbers(filepath):
-    result = 0
-    name = get_basename(filepath)
-    match = enum.match(name)
-    if match is not None:
-        res = match.group()
-        if res.isdigit():
-            result = res
-    return result
+def calc_numbers(filepath):
+    basename = WindowsPath(filepath).name
+    return len(basename) + sum(float(i) for i in basename if i.isdigit())
 
 
 def get_revit_directories(input_path):
@@ -87,7 +81,7 @@ def get_result_rvt_path_list(project_dir_path):
             temp_list = get_rvt_paths_by_directory(dir)
             revit_paths.extend(temp_list)
 
-    revit_paths.sort(key=lambda x: get_last_numbers(x))
+    revit_paths.sort(key=lambda x: calc_numbers(x))
     return revit_paths
 
 
@@ -101,8 +95,8 @@ def numerate_path_list(line_list):
 
 
 def write_revit_path_list_to_file(filepath, paths):
-    with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as file:
-        [file.write(item + "\n") for item in paths]
+    with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
+        [fl.write(item + "\n") for item in paths]
     return os.path.isfile(filepath)
 
 
