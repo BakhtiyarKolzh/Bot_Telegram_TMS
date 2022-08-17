@@ -11,8 +11,8 @@ import RevitSortFiles
 import authentication  #### Library Protect ID
 #    My libraries
 import configure  #### Library for Token
-import database
 
+# import database
 
 
 #                                       INPUT DATES
@@ -58,10 +58,10 @@ def start(message):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button_task = types.KeyboardButton('Начать задание')
-    button_url = types.KeyboardButton('URL')
+    # button_url = types.KeyboardButton('URL')
 
-    markup.add(button_task, button_url)
-    bot.send_message(message.chat.id, "Выберите необходимую команду", reply_markup=markup)
+    markup.add(button_task)
+    bot.send_message(message.chat.id, "Выберите команду Начать задание", reply_markup=markup)
 
     return
 
@@ -73,7 +73,6 @@ def start_task(message):
             call_button_batch(message)
 
     return
-
 
 
 ########################################################################################################################
@@ -127,30 +126,25 @@ def callback(message):
 ########################################################################################################################
 ########################################################################################################################
 
-#########
-#########
-#########
-
 '''DWG CONVERTER'''
 
-
 ########################################################################################################################
-def user_answer_for_DWG(message):
-    open_dir = str(message.text)
-    if os.path.exists(open_dir):
-
-        #  SCAN DIR FOR REVIT
-        # listPaths = SortRevitNameFiles()
-
-        filepath = os.path.join(open_dir + "\ExportToDWG.bat")
-        path_launch(filepath, message, "DWG")
-        print("DWG")
-        result = bot.send_message(message.chat.id, "Выберите файлы:")
-        # bot.register_next_step_handler(result, func_for_keyboard)
-    else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-    return
-
+# def user_answer_for_DWG(message):
+#     open_dir = str(message.text)
+#     if os.path.exists(open_dir):
+#
+#         #  SCAN DIR FOR REVIT
+#         # listPaths = SortRevitNameFiles()
+#
+#         filepath = os.path.join(open_dir + "\ExportToDWG.bat")
+#         path_launch(filepath, message, "DWG")
+#         print("DWG")
+#         result = bot.send_message(message.chat.id, "Выберите файлы:")
+#         # bot.register_next_step_handler(result, func_for_keyboard)
+#     else:
+#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+#     return
+#
 
 ########################################################################################################################
 
@@ -158,41 +152,38 @@ def user_answer_for_DWG(message):
 
 
 ########################################################################################################################
-
-def user_answer_for_NWC(message):
-    open_dir = str(message.text)
-
-    if os.path.exists(open_dir):
-
-        #  SCAN DIR FOR REVIT
-        # listPaths = SortRevitNameFiles()
-
-        filepath = os.path.join(open_dir + "\ExportToNavisworks.bat")
-        path_launch(filepath, message, "NWC")
-        print("NWC")
-        result = bot.send_message(message.chat.id, "Выберите файлы:")
-        # bot.register_next_step_handler(result, func_for_keyboard)
-    else:
-        bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-    return
-
-
-########################################################################################################################
-'''PDF CONVERTER'''  # TEST Version ##########     Use only it
-
+#
+# def user_answer_for_NWC(message):
+#     open_dir = str(message.text)
+#
+#     if os.path.exists(open_dir):
+#
+#         #  SCAN DIR FOR REVIT
+#         # listPaths = SortRevitNameFiles()
+#
+#         filepath = os.path.join(open_dir + "\ExportToNavisworks.bat")
+#         path_launch(filepath, message, "NWC")
+#         print("NWC")
+#         result = bot.send_message(message.chat.id, "Выберите файлы:")
+#         # bot.register_next_step_handler(result, func_for_keyboard)
+#     else:
+#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
+#     return
+#
+#
+# ########################################################################################################################
+# '''PDF CONVERTER'''  # TEST Version ##########     Use only it
 
 def user_answer_for_PDF(message):
     global filepath
     input_path = os.path.realpath(message.text)
     if os.path.exists(input_path):
         filepath = input_path
-        #  SCAN DIR FOR REVIT
         listPaths = RevitSortFiles.get_result_rvt_path_list(input_path)
-
         filepath = os.path.join(input_path + "\ExportToPDF.bat")
-
         path_launch(filepath, message, "PDF")
         print("PDF")
+
         menu_for_button(message)
 
 
@@ -207,10 +198,6 @@ def user_answer_for_PDF(message):
 ########################################################################################################################
 ########################################################################################################################
 
-#########
-#########
-#########
-
 '''Start def'''
 
 
@@ -220,22 +207,15 @@ def path_launch(filepath, message, call):
     if (os.path.exists(filepath)):
         # os.startfile(filepath)
         print("Старт")
-        bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен")
+        # bot.send_message(message.chat.id, f"Процесс выгрузки в {call} запущен")
     return
 
 
 ########################################################################################################################
 ########################################################################################################################
 
-
-
-
-
-
-########################################################################################################################
-########################################################################################################################
-
 '''Menu_for_button'''
+
 
 @bot.message_handler(content_types=['text'])
 def menu_for_button(message):
@@ -255,21 +235,15 @@ def menu_for_button(message):
 
 def select_button(message):
     if message.text == "Выбор файлов":
-        result=bot.send_message(message.chat.id, "СПИСОК ФАЙЛОВ ПОДАН, ВЫБЕРИТЕ НЕОБХОДИМЫЕ")
-        bot.register_next_step_handler(result, new_func)
-        # new_func(message)
-           ###### переместить в функицю по выбору файлов
-        func_zero(message)
+        select_files(message)
 
     elif message.text == "Выбрать все файлы":
-        # result=bot.send_message(message.chat.id, "ВСЕ ФАЙЛЫ ВЫБРАНЫ")
-        # bot.register_next_step_handler(result, all_files_func)
-        ################        FUnc for select section
-        all_files_func(message)
+        print("Выбрать все файлы")
+        select_all_files(message)
 
     elif message.text == "ОТМЕНА":
-        bot.send_message(message.chat.id, " ОПЕРАЦИЯ ОТМЕНЕНА")
-        start(message)
+        print("ОТМЕНА")
+
     else:
         result = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
         bot.register_next_step_handler(result, select_button)
@@ -280,149 +254,78 @@ def select_button(message):
 ########################################################################################################################
 ########################################################################################################################
 
-'''kEYBOARD OK and OTMENA'''
-
-
-@bot.message_handler(content_types=['text'])
-def call_button_ok(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button_name_ok = types.KeyboardButton('ОК')
-    button_name_close = types.KeyboardButton('ОТМЕНА')
-    markup.add(button_name_ok, button_name_close)
-
-    msm = "Подтвердите операцию нажав ОК, если оперцию нужно отменить Отмена"
-    result = bot.send_message(message.chat.id, msm, reply_markup=markup)
-    bot.register_next_step_handler(result, button_ok)
-
-    return
-######
-
-def button_ok(message):
-    if message.text == 'ОК':
-        global filepath
-        global commands
-        global controlId
-        bot.send_message(message.chat.id, "Операция по выгрузке запущена")
-        database.save_command_data(database_path, filepath, controlId, commands)
-        start(message)
-    elif message.text == 'ОТМЕНА':
-        bot.send_message(message.chat.id, "Операция по выгрузке отменена")
-        start(message)
-    else:
-        result = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
-        bot.register_next_step_handler(result, button_ok)
-
-    return
-
-
-########################################################################################################################
-########################################################################################################################
 '''SELECT A SECTION --- def'''
 
 
-def new_func(message):
+def select_files(message):
     global commands
+    result = None
     commands = list()  # int types
     number = message.text
-
-    number = -1 if isinstance(number, str) and not number.isdigit() else number
+    ok = call_button_ok_and_otmena(message)
+    if bool(ok): return
+    number = 0 if isinstance(number, str) and not number.isdigit() else number
     number = int(number) if isinstance(number, str) else number
 
     print(number)
 
-    # commands = message.text
+    bot.register_next_step_handler(message, select_files)
 
-    if number != 0:
-        result = bot.send_message(message.chat.id, f"Выберана секция {number}")
-        bot.register_next_step_handler(result, new_func)
-        print(commands)
-    elif number == 0:
-        number = 0
-        result = bot.send_message(message.chat.id, "Выбраны все секции")
-        bot.register_next_step_handler(result, func_zero)
-    ######
     return
 
-def all_files_func(message):
+
+########################################################################################################################
+########################################################################################################################
+'''SELECT All files--- def'''
+
+def select_all_files(message):
     global commands
+    result = None
     commands = list()  # int types
     number = 0
-
-    number = -1 if isinstance(number, str) and not number.isdigit() else number
+    ok = call_button_ok_and_otmena(message)
+    if bool(ok): return
+    number = 0 if isinstance(number, str) and not number.isdigit() else number
     number = int(number) if isinstance(number, str) else number
 
     print(number)
-    func_zero(message)
+
+    bot.register_next_step_handler(message, start)
 
 
-
-
-
+    return
 
 ########################################################################################################################
 ########################################################################################################################
-'''SELECT BUTTON OK --- ZERO'''
-
-def func_zero(message):
+@bot.message_handler(content_types=['text'])
+def call_button_ok_and_otmena(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+
     button_name_ok = types.KeyboardButton('ОК')
-    markup.add(button_name_ok)
-    result = bot.send_message(message.chat.id, "Подтвердите операцию нажав ОК",
-                              reply_markup=markup)
-    bot.register_next_step_handler(result, func_zero_button_ok)
-    return
+    button_name_close = types.KeyboardButton('ОТМЕНА')
 
-def func_zero_button_ok(message):
+    markup.add(button_name_ok, button_name_close)
+
+    msg = "Подтвердите операцию нажав ОК, если оперцию нужно отменить Отмена"
+    result = bot.send_message(message.chat.id, msg, reply_markup=markup)
+
+    bot.register_next_step_handler(result, button_ok_and_otmena)
+
+
+def button_ok_and_otmena(message):
     if message.text == 'ОК':
-        global filepath
-        global commands
-        global controlId
-        result=bot.send_message(message.chat.id, "Операция по выгрузке запущена")
-        database.save_command_data(database_path, filepath, controlId, commands)
-        bot.register_next_step_handler(result, start)
+        print('OK')
+
+
+    elif message.text == 'ОТМЕНА':
+        print('ОТМЕНА')
 
     return
-########################################################################################################################
-########################################################################################################################
 
 
 
 
 
-'''BUTTON URL'''
-
-
-########################################################################################################################
-# def website(message):
-#     markup = types.InlineKeyboardMarkup(row_width=3)
-#
-#     button_for_bim360 = types.InlineKeyboardButton("BIM360", url=url_BIM360)
-#     button_for_Google_Sheets = types.InlineKeyboardButton("Google Sheets", url=url_Google_Sheets)
-#     button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk", url=url_Yandex_Disk)
-#     button_for_BI_Design = types.InlineKeyboardButton("BIDesign", url=url_BI_Design)
-#     button_for_Google_Docs = types.InlineKeyboardButton("Google Docs", url=url_Google_Docs)
-#     markup.add(button_for_bim360,
-#                button_for_Google_Sheets,
-#                button_for_BI_Design,
-#                button_for_Yandex_Disk,
-#                button_for_Google_Docs)
-#     bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
-#
-#     return
-
-
-########################################################################################################################
-# markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-# button_DWG = types.KeyboardButton('DWG')
-# button_NWC =types.KeyboardButton('NWC')
-# button_PDF = types.KeyboardButton('PDF')
-#
-# markup.add(button_DWG, button_NWC, button_PDF)
-#
-# result=bot.send_message(message.chat.id, "Выберите формат для перевода данных:", reply_markup=markup)
-# bot.register_next_step_handler(result, Callback)
-#
-# return
 
 
 # --------------------------------------------------OUT -----------------------------------------------------------------

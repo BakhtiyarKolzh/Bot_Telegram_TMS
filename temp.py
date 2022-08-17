@@ -190,3 +190,67 @@
 #             dir_for_PDF = bot.send_message(call.message.chat.id, 'Введите путь для PDF')
 #             bot.register_next_step_handler(dir_for_PDF, user_answer_for_PDF)
 #     return
+########################################################################################################################
+########################################################################################################################
+# '''SELECT BUTTON OK --- ZERO'''
+#
+# def func_zero(message):
+#     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     button_name_ok = types.KeyboardButton('ОК')
+#     markup.add(button_name_ok)
+#     result = bot.send_message(message.chat.id, "Подтвердите операцию нажав ОК",
+#                               reply_markup=markup)
+#     bot.register_next_step_handler(result, func_zero_button_ok)
+#     return
+#
+# def func_zero_button_ok(message):
+#     if message.text == 'ОК':
+#         global filepath
+#         global commands
+#         global controlId
+#         result=bot.send_message(message.chat.id, "Операция по выгрузке запущена")
+#         # database.save_command_data(database_path, filepath, controlId, commands)
+#         bot.register_next_step_handler(result, start)
+#
+#     return
+# ########################################################################################################################
+########################################################################################################################
+
+
+
+
+
+'''BUTTON URL'''
+
+
+########################################################################################################################
+# def website(message):
+#     markup = types.InlineKeyboardMarkup(row_width=3)
+#
+#     button_for_bim360 = types.InlineKeyboardButton("BIM360", url=url_BIM360)
+#     button_for_Google_Sheets = types.InlineKeyboardButton("Google Sheets", url=url_Google_Sheets)
+#     button_for_Yandex_Disk = types.InlineKeyboardButton("Yandex Disk", url=url_Yandex_Disk)
+#     button_for_BI_Design = types.InlineKeyboardButton("BIDesign", url=url_BI_Design)
+#     button_for_Google_Docs = types.InlineKeyboardButton("Google Docs", url=url_Google_Docs)
+#     markup.add(button_for_bim360,
+#                button_for_Google_Sheets,
+#                button_for_BI_Design,
+#                button_for_Yandex_Disk,
+#                button_for_Google_Docs)
+#     bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
+#
+#     return
+
+
+########################################################################################################################
+# markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+# button_DWG = types.KeyboardButton('DWG')
+# button_NWC =types.KeyboardButton('NWC')
+# button_PDF = types.KeyboardButton('PDF')
+#
+# markup.add(button_DWG, button_NWC, button_PDF)
+#
+# result=bot.send_message(message.chat.id, "Выберите формат для перевода данных:", reply_markup=markup)
+# bot.register_next_step_handler(result, Callback)
+#
+# return
