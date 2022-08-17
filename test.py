@@ -1,13 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
-from pathlib import Path
 
-# filepath = "I:\\\\51_UZHNY_TREUGOLNIK\\01_PROJECT\\III_1_AS\\01_RVT"
+# import os
+# import codecs
+# from pathlib import WindowsPath
 #
-# # filepath = filepath.replace("\\", os.path.sep)
-# # if os.path.exists(filepath):
-# #     print("YES")
-# print(filepath)
+#
+# def get_basename(filepath):
+#     fullname = os.path.basename(filepath)
+#     filename, ext = os.path.splitext(fullname)
+#     return filename
+#
+#
+# def calc_numbers(basename):
+#     return len(basename) + sum(float(i) for i in basename if i.isdigit())
+#
+#
+# source = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_file_list.txt")
+# with codecs.open(source, mode='r', encoding='utf-8', errors='ignore') as fl:
+#     collection = [WindowsPath(line) for line in fl.readlines() if line]
+#     decorated = [(calc_numbers(line.name), line) for line in collection]
+#     decorated.sort()
+#
+# result = [os.path.realpath(filepath) for i, filepath in decorated]
 
-# print(type(filepath))
