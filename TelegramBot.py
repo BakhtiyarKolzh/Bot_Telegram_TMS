@@ -233,9 +233,13 @@ def menu_for_button(message):
     return
 
 
+
 def select_button(message):
     if message.text == "Выбор файлов":
-        select_files(message)
+        canceled = bool(call_button_ok_and_otmena(message))
+        while (True):
+            if canceled: return
+            bot.register_next_step_handler(message, select_files)
 
     elif message.text == "Выбрать все файлы":
         print("Выбрать все файлы")
@@ -259,24 +263,26 @@ def select_button(message):
 
 def select_files(message):
     global commands
-    result = None
     commands = list()  # int types
     number = message.text
-    ok = call_button_ok_and_otmena(message)
-    if bool(ok): return
+
+    if number != 0:
+        print(number)
+        commands.append(number)
+
     number = 0 if isinstance(number, str) and not number.isdigit() else number
-    number = int(number) if isinstance(number, str) else number
+    number = number if isinstance(number, int) else int(number)
 
-    print(number)
+    return number
 
-    bot.register_next_step_handler(message, select_files)
 
-    return
+
 
 
 ########################################################################################################################
 ########################################################################################################################
 '''SELECT All files--- def'''
+
 
 def select_all_files(message):
     global commands
@@ -292,8 +298,8 @@ def select_all_files(message):
 
     bot.register_next_step_handler(message, start)
 
-
     return
+
 
 ########################################################################################################################
 ########################################################################################################################
@@ -306,10 +312,12 @@ def call_button_ok_and_otmena(message):
 
     markup.add(button_name_ok, button_name_close)
 
-    msg = "Подтвердите операцию нажав ОК, если оперцию нужно отменить Отмена"
+    msg = ""
     result = bot.send_message(message.chat.id, msg, reply_markup=markup)
 
     bot.register_next_step_handler(result, button_ok_and_otmena)
+
+    return
 
 
 def button_ok_and_otmena(message):
@@ -321,11 +329,6 @@ def button_ok_and_otmena(message):
         print('ОТМЕНА')
 
     return
-
-
-
-
-
 
 
 # --------------------------------------------------OUT -----------------------------------------------------------------
