@@ -130,15 +130,15 @@ def execute_commands(data_path):
     return
 
 
-database = OrderedDict()
-cmd = ["DWG", "NWC", "PDF"]
-mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
-
-for x in range(10):
-    control = random.choice(cmd)
-    path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
-    commands = [random.randint(0, 25) for i in range(5)]
-    save_command_data(mypath, path, control, commands)
-    execute_commands(mypath)
-
-print(rvt_path_list_file)
+# database = OrderedDict()
+# cmd = ["DWG", "NWC", "PDF"]
+# mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
+#
+# for x in range(10):
+#     control = random.choice(cmd)
+#     path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
+#     commands = [random.randint(0, 25) for i in range(5)]
+#     save_command_data(mypath, path, control, commands)
+#     execute_commands(mypath)
+#
+# print(rvt_path_list_file)

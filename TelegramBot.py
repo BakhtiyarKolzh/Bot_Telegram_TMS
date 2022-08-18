@@ -3,6 +3,7 @@
 
 import os
 import os.path
+import time
 
 import telebot
 from telebot import types
@@ -12,8 +13,7 @@ import authentication  #### Library Protect ID
 #    My libraries
 import configure  #### Library for Token
 
-# import database
-
+import database
 
 #                                       INPUT DATES
 ########################################################################################################################
@@ -21,7 +21,6 @@ bot = telebot.TeleBot(configure.config["token"])
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 ########################################################################################################################
-
 
 url_BIM360 = "https://insight.b360.eu.autodesk.com/accounts/bf8a62b2-d479-4c2e-8523-103a1de299ea/projects/7a15c326-d421-4efb-98cd-fa817eb95f96/home"
 url_Google_Sheets = "https://docs.google.com/spreadsheets/d/1tbvsFXLMzuKftQu9LV9jQ4FD6ik_l5yP-XRrhQsCrvw/edit?usp=sharing"
@@ -35,7 +34,6 @@ filepath = ''
 controlId = ''
 commands = list()
 
-
 ########################################################################################################################
 #                                    --Bot Protection---
 
@@ -44,13 +42,9 @@ def protection_id(message):
     bot.send_message(message.chat.id, 'У Вас нет прав на выполнение данной команды, обратитесь к администратору')
     return
 
-
 ########################################################################################################################
 
 '''   START TELEGRAM    '''
-
-
-########################################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
@@ -77,10 +71,12 @@ def start_task(message):
 
 ########################################################################################################################
 
+
 '''   CREATE BUTTON ---- DWG,NWC,PDF   '''
 
 
 #######################################################################################################################
+
 
 @bot.message_handler(content_types=['text'])
 def call_button_batch(message):
@@ -103,12 +99,12 @@ def callback(message):
     if message.text == "DWG":
         controlId = "DWG"
         dir_for_DWG = bot.send_message(message.chat.id, "Введите путь для DWG")
-        bot.register_next_step_handler(dir_for_DWG, user_answer_for_DWG)
+        bot.register_next_step_handler(dir_for_DWG, user_answer_for_PDF)
 
     elif message.text == "NWC":
         controlId = "NWC"
         dir_for_NWC = bot.send_message(message.chat.id, "Введите путь для NWC")
-        bot.register_next_step_handler(dir_for_NWC, user_answer_for_NWC)
+        bot.register_next_step_handler(dir_for_NWC, user_answer_for_PDF)
 
     elif message.text == "PDF":
         controlId = "PDF"
@@ -125,54 +121,8 @@ def callback(message):
 
 ########################################################################################################################
 ########################################################################################################################
+# ######################################################################################################################
 
-'''DWG CONVERTER'''
-
-########################################################################################################################
-# def user_answer_for_DWG(message):
-#     open_dir = str(message.text)
-#     if os.path.exists(open_dir):
-#
-#         #  SCAN DIR FOR REVIT
-#         # listPaths = SortRevitNameFiles()
-#
-#         filepath = os.path.join(open_dir + "\ExportToDWG.bat")
-#         path_launch(filepath, message, "DWG")
-#         print("DWG")
-#         result = bot.send_message(message.chat.id, "Выберите файлы:")
-#         # bot.register_next_step_handler(result, func_for_keyboard)
-#     else:
-#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-#     return
-#
-
-########################################################################################################################
-
-'''Navisworks CONVERTER'''
-
-
-########################################################################################################################
-#
-# def user_answer_for_NWC(message):
-#     open_dir = str(message.text)
-#
-#     if os.path.exists(open_dir):
-#
-#         #  SCAN DIR FOR REVIT
-#         # listPaths = SortRevitNameFiles()
-#
-#         filepath = os.path.join(open_dir + "\ExportToNavisworks.bat")
-#         path_launch(filepath, message, "NWC")
-#         print("NWC")
-#         result = bot.send_message(message.chat.id, "Выберите файлы:")
-#         # bot.register_next_step_handler(result, func_for_keyboard)
-#     else:
-#         bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
-#     return
-#
-#
-# ########################################################################################################################
-# '''PDF CONVERTER'''  # TEST Version ##########     Use only it
 
 def user_answer_for_PDF(message):
     global filepath
@@ -186,7 +136,6 @@ def user_answer_for_PDF(message):
 
         menu_for_button(message)
 
-
     else:
         filepath = None
         result = bot.send_message(message.chat.id, "ОШИБКА ПУТИ!!! ВВЕДИТЕ ПУТЬ ЗАНОВО!!!")
@@ -197,11 +146,8 @@ def user_answer_for_PDF(message):
 
 ########################################################################################################################
 ########################################################################################################################
-
-'''Start def'''
-
-
 ########################################################################################################################
+
 
 def path_launch(filepath, message, call):
     if (os.path.exists(filepath)):
@@ -215,7 +161,6 @@ def path_launch(filepath, message, call):
 ########################################################################################################################
 
 '''Menu_for_button'''
-
 
 @bot.message_handler(content_types=['text'])
 def menu_for_button(message):
@@ -233,13 +178,11 @@ def menu_for_button(message):
     return
 
 
-
 def select_button(message):
     if message.text == "Выбор файлов":
-        canceled = bool(call_button_ok_and_otmena(message))
-        while (True):
-            if canceled: return
-            bot.register_next_step_handler(message, select_files)
+        commands = list()
+        select_files(message, commands)
+        print("Выбор файлов")
 
     elif message.text == "Выбрать все файлы":
         print("Выбрать все файлы")
@@ -260,24 +203,23 @@ def select_button(message):
 
 '''SELECT A SECTION --- def'''
 
-
-def select_files(message):
-    global commands
-    commands = list()  # int types
+def select_files(message, commands):
+    print(commands)
     number = message.text
-
-    if number != 0:
-        print(number)
-        commands.append(number)
-
     number = 0 if isinstance(number, str) and not number.isdigit() else number
-    number = number if isinstance(number, int) else int(number)
+    commands.append(number) if isinstance(number, int) else commands.append(int(number))
+    bot.clear_step_handler_by_chat_id(chat_id=message.chat.id)
+    canceled = call_button_ok_and_otmena(message)
+    if canceled:
+        print(canceled)
+        return
 
-    return number
+    bot.register_next_step_handler(message, select_files, commands)
 
 
-
-
+@bot.poll_answer_handler()
+def handle_poll_answer(message):
+    print(message)
 
 ########################################################################################################################
 ########################################################################################################################
@@ -286,7 +228,6 @@ def select_files(message):
 
 def select_all_files(message):
     global commands
-    result = None
     commands = list()  # int types
     number = 0
     ok = call_button_ok_and_otmena(message)
@@ -305,6 +246,7 @@ def select_all_files(message):
 ########################################################################################################################
 @bot.message_handler(content_types=['text'])
 def call_button_ok_and_otmena(message):
+
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
     button_name_ok = types.KeyboardButton('ОК')
@@ -312,21 +254,19 @@ def call_button_ok_and_otmena(message):
 
     markup.add(button_name_ok, button_name_close)
 
-    msg = ""
-    result = bot.send_message(message.chat.id, msg, reply_markup=markup)
+    result = bot.send_message(message.chat.id, "Введите данные", reply_markup=markup)
+    bot.clear_step_handler_by_chat_id(chat_id=message.chat.id)
+    print(result.text)
 
-    bot.register_next_step_handler(result, button_ok_and_otmena)
-
-    return
-
-
-def button_ok_and_otmena(message):
     if message.text == 'ОК':
+        bot.register_next_step_handler(message, start)
         print('OK')
+        return True
 
-
-    elif message.text == 'ОТМЕНА':
+    if message.text == 'ОТМЕНА':
+        bot.register_next_step_handler(message, start)
         print('ОТМЕНА')
+        return True
 
     return
 
