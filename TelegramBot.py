@@ -192,6 +192,8 @@ def select_button(message):
 
     elif message.text == "ОТМЕНА":
         print("ОТМЕНА")
+        start(message)
+
 
     else:
         result = bot.send_message(message.chat.id, "ОШИБКА ВВОДА!!! ВЫБЕРИТЕ ПРАВИЛЬНУЮ КНОПКУ!!!")
@@ -243,12 +245,14 @@ def call_button_ok_and_otmena(message):
     print(result.text)
 
     if message.text == 'ОК':
+        bot.send_message(message.chat.id, "Файлы были запущены, возвращаю обратно в меню")
         start(message)
         print('OK')
         return True
 
 
     if message.text == 'ОТМЕНА':
+        bot.send_message(message.chat.id, "Понял уже отменил")
         start(message)
         print('ОТМЕНА')
         return True
