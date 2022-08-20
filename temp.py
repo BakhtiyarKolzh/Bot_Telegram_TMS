@@ -240,9 +240,9 @@
 #     bot.send_message(message.chat.id, "Пройдите по ссылке снизу:", reply_markup=markup)
 #
 #     return
-
-
-########################################################################################################################
+#
+#
+# #######################################################################################################################
 # markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 # button_DWG = types.KeyboardButton('DWG')
 # button_NWC =types.KeyboardButton('NWC')

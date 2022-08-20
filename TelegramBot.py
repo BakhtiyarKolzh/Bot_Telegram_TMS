@@ -13,7 +13,7 @@ import authentication  #### Library Protect ID
 #    My libraries
 import configure  #### Library for Token
 
-import database
+# import database
 
 #                                       INPUT DATES
 ########################################################################################################################
@@ -22,11 +22,14 @@ users_start = authentication.config["ID"]  # последнее - id групп�
 database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 ########################################################################################################################
 
-url_BIM360 = "https://insight.b360.eu.autodesk.com/accounts/bf8a62b2-d479-4c2e-8523-103a1de299ea/projects/7a15c326-d421-4efb-98cd-fa817eb95f96/home"
-url_Google_Sheets = "https://docs.google.com/spreadsheets/d/1tbvsFXLMzuKftQu9LV9jQ4FD6ik_l5yP-XRrhQsCrvw/edit?usp=sharing"
+url_BIM360 = "https://insight.b360.eu.autodesk.com/accounts/" \
+             "bf8a62b2-d479-4c2e-8523-103a1de299ea/projects/7a15c326-d421-4efb-98cd-fa817eb95f96/home"
+url_Google_Sheets = "https://docs.google.com/spreadsheets/d/" \
+                    "1tbvsFXLMzuKftQu9LV9jQ4FD6ik_l5yP-XRrhQsCrvw/edit?usp=sharing"
 url_Yandex_Disk = "https://disk.yandex.kz/client/disk?utm_source=main_stripe_big_more"
 url_BI_Design = "https://design.bi.group/"
-url_Google_Docs = "https://docs.google.com/spreadsheets/d/1WesHLNRMiR5OOTFm0-t-VFiDfdix1NWCtgoqZq52nFI/edit#gid=0"
+url_Google_Docs = "https://docs.google.com/spreadsheets/d/" \
+                  "1WesHLNRMiR5OOTFm0-t-VFiDfdix1NWCtgoqZq52nFI/edit#gid=0"
 
 ########################################################################################################################
 
@@ -67,7 +70,6 @@ def start_task(message):
             call_button_batch(message)
 
     return
-
 
 ########################################################################################################################
 
@@ -186,7 +188,7 @@ def select_button(message):
 
     elif message.text == "Выбрать все файлы":
         print("Выбрать все файлы")
-        select_all_files(message)
+        # select_all_files(message)
 
     elif message.text == "ОТМЕНА":
         print("ОТМЕНА")
@@ -218,28 +220,10 @@ def select_files(message, commands):
 
 
 @bot.poll_answer_handler()
+
 def handle_poll_answer(message):
     print(message)
 
-########################################################################################################################
-########################################################################################################################
-'''SELECT All files--- def'''
-
-
-def select_all_files(message):
-    global commands
-    commands = list()  # int types
-    number = 0
-    ok = call_button_ok_and_otmena(message)
-    if bool(ok): return
-    number = 0 if isinstance(number, str) and not number.isdigit() else number
-    number = int(number) if isinstance(number, str) else number
-
-    print(number)
-
-    bot.register_next_step_handler(message, start)
-
-    return
 
 
 ########################################################################################################################
@@ -259,17 +243,17 @@ def call_button_ok_and_otmena(message):
     print(result.text)
 
     if message.text == 'ОК':
-        bot.register_next_step_handler(message, start)
+        start(message)
         print('OK')
         return True
 
+
     if message.text == 'ОТМЕНА':
-        bot.register_next_step_handler(message, start)
+        start(message)
         print('ОТМЕНА')
         return True
 
     return
-
 
 # --------------------------------------------------OUT -----------------------------------------------------------------
 
