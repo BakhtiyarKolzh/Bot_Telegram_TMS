@@ -1,20 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import json
 import os
 import time
 import uuid
-import json
-import random
 from collections import OrderedDict
-from multiprocessing import Lock
 
-import RevitSortFiles
+import path_manager
 
+database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 rvt_path_list_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_path_list_bot.txt")
 
 
 def create_session():
     return str(uuid.uuid1())
+
+
+def remove(path):
+    if os.path.isfile(path):
+        try:
+            os.unlink(path)
+        except:
+            pass
+    return
 
 
 def add_item_to_dictionary(data, key, value):
@@ -60,53 +68,49 @@ def update_json_data(path, data):
 
 
 def save_command_data(data_path, filepath, control_id, commands):
-    with Lock():
-        action = list()
-        data = OrderedDict()
-        action.append(filepath)
-        action.append(control_id)
-        if isinstance(commands, list): action.extend(commands)
-        if not isinstance(commands, list): action.append(commands)
-        data = add_item_to_dictionary(data, create_session(), action)
+    action = list()
+    data = OrderedDict()
+    action.append(filepath)
+    action.append(control_id)
+    if isinstance(commands, list): action.extend(commands)
+    if not isinstance(commands, list): action.append(commands)
+    data = add_item_to_dictionary(data, create_session(), action)
 
-        return update_json_data(data_path, data)
+    return update_json_data(data_path, data)
 
 
 def read_command_data(data_path, data):
-    with Lock():
-        commands = []
-        session, action = pop_item_from_dictionary(data)
-        if write_json_data(data_path, data):
-            if isinstance(action, list):
-                filepath = action.pop(0)
-                control = action.pop(0)
-                for val in action:
-                    if isinstance(val, str) and val.isdigit(): val = int(val)
-                    if isinstance(val, int) and val not in commands: commands.append(val)
+    commands = []
+    session, action = pop_item_from_dictionary(data)
+    if write_json_data(data_path, data):
+        if isinstance(action, list):
+            filepath = action.pop(0)
+            control = action.pop(0)
+            for val in action:
+                if isinstance(val, str) and val.isdigit(): val = int(val)
+                if isinstance(val, int) and val not in commands: commands.append(val)
 
-                return filepath, control, commands
+            return filepath, control, commands
 
 
 def run_cmd(control, paths):
-    with Lock():
-        time.sleep(30)
-        global rvt_path_list_file
-        RevitSortFiles.write_revit_path_list_to_file(rvt_path_list_file, paths)
-        if "DWG" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
-            if os.path.exists(bat_file):
-                os.startfile(bat_file)
-                print("Set DWG")
-        if "NWC" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
-            if os.path.exists(bat_file):
-                os.startfile(bat_file)
-                print("Set NWC")
-        if "PDF" == control:
-            bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
-            if os.path.exists(bat_file):
-                os.startfile(bat_file)
-                print("Set PDF")
+    global rvt_path_list_file
+    path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
+    if "DWG" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
+        if os.path.exists(bat_file):
+            os.startfile(bat_file)
+            print("Set DWG")
+    if "NWC" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
+        if os.path.exists(bat_file):
+            os.startfile(bat_file)
+            print("Set NWC")
+    if "PDF" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
+        if os.path.exists(bat_file):
+            os.startfile(bat_file)
+            print("Set PDF")
 
     return
 
@@ -121,24 +125,19 @@ def execute_commands(data_path):
             if isinstance(commands, list) and len(commands):
                 if isinstance(filepath, str) and isinstance(control, str):
                     commands = [cmd for cmd in commands if isinstance(cmd, int)]
-                    paths = RevitSortFiles.get_result_rvt_path_list(filepath)
-                    paths = RevitSortFiles.retrieve_paths(paths, commands)
+                    paths = path_manager.get_result_rvt_path_list(filepath)
+                    paths = path_manager.retrieve_paths(paths, commands)
                     [print(path) for path in paths]
                     run_cmd(control, paths)
-                    print(commands)
-                    print("\n")
+                    time.sleep(1000)
     return
 
 
-# database = OrderedDict()
-# cmd = ["DWG", "NWC", "PDF"]
-# mypath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
-#
-# for x in range(10):
-#     control = random.choice(cmd)
-#     path = r"I:\48_BTG_3-4\01_PROJECT\III_1_AS\01_RVT"
-#     commands = [random.randint(0, 25) for i in range(5)]
-#     save_command_data(mypath, path, control, commands)
-#     execute_commands(mypath)
-#
-# print(rvt_path_list_file)
+def start():
+    while True:
+        time.sleep(5)
+        print('while')
+        database_dict = deserialize_json_data(database_path)
+        if not isinstance(database_dict, dict): time.sleep(1000)
+        if isinstance(database_dict, dict) and not len(database_dict): remove(database_path)
+        if isinstance(database_dict, dict) and len(database_dict): execute_commands(database_path)

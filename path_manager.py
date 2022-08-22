@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from pathlib import WindowsPath
 import codecs
 import os
 import re
+from pathlib import WindowsPath
 
 ########################################################################################################################
 
