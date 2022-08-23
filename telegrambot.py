@@ -30,7 +30,7 @@ commands = list()
 ########################################################################################################################
 #                                    --Bot Protection---
 
-@bot.message_handler(func=lambda message: message.chat.id not in users_start, commands=['start', "url"])
+@bot.message_handler(func=lambda message: message.chat.id not in users_start, commands=['start'])
 def protection_id(message):
     bot.send_message(message.chat.id, 'У Вас нет прав на выполнение данной команды, обратитесь к администратору')
     return

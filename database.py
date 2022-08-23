@@ -133,9 +133,9 @@ def execute_commands(data_path):
     return
 
 
-def start():
+def run():
     while True:
-        time.sleep(5)
+        time.sleep(1)
         print('while')
         database_dict = deserialize_json_data(database_path)
         if not isinstance(database_dict, dict): time.sleep(1000)
