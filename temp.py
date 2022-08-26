@@ -254,3 +254,31 @@
 # bot.register_next_step_handler(result, Callback)
 #
 # return
+
+######################################################################################################
+
+
+#     await call_button_format(message)
+#     print("ok")
+#     return
+#
+# async def call_button_format(message):
+# #     global controlId
+#     if message.text =='DWG' or 'NWC' or 'PDF':
+#         print('format')
+#         if message.text == "DWG":
+#             controlId = "DWG"
+#             await bot.send_message(message.chat.id, "Введите путь для DWG")
+#             print(controlId)
+#
+#         elif message.text == "NWC":
+#             controlId = "NWC"
+#             await bot.send_message(message.chat.id, "Введите путь для NWC")
+#             print(controlId)
+#
+#         elif message.text == "PDF":
+#             controlId = "PDF"
+#             await bot.send_message(message.chat.id, 'Введите путь для PDF')
+#             print(controlId)
+#         #
+#         # else:

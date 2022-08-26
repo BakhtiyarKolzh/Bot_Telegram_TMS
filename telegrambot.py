@@ -256,8 +256,9 @@ def call_button_ok_and_cancel(message):
 
 
 # --------------------------------------------------OUT -----------------------------------------------------------------
-
-bot.infinity_polling(none_stop=True, interval=0.5)
+def run_polling():
+    bot.infinity_polling(none_stop=True, interval=0.5, timeout=1)
+    return
 ########################################################################################################################
 
 #                                                -SAVES-
