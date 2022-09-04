@@ -24,8 +24,8 @@ import telegrambot
 
 async def request():
     task1 = asyncio.create_task(telegrambot.run_polling())
-    task2 = asyncio.create_task(method1())
-    return await asyncio.gather(task2, task1)
+    # task2 = asyncio.create_task(method1())
+    # return await asyncio.gather(task2, task1)
 
 
 async def method1():

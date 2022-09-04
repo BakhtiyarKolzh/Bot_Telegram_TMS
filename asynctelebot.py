@@ -79,6 +79,7 @@ async def call_back_start_to_format(message: types.Message):
     global flag
     global reply_km
     global reply_kb
+    global controlId
     flag = True
     markup = reply_km(resize_keyboard=True)
     markup.add(reply_kb(text='DWG'), reply_kb(text='NWC'), reply_kb(text='PDF'))
@@ -120,6 +121,7 @@ async def menu_for_button(message: types.Message):
 
 @dp.message_handler(lambda message: len(message.text) > 15 and not os.path.exists(os.path.realpath(message.text)))
 async def test_for_button(message: types.Message):
+    global directory
     # await menu_button_ok_and_cancel(message)
     await message.answer("MISTAKE")
     print(message.text)
@@ -129,12 +131,12 @@ async def test_for_button(message: types.Message):
 async def call_back_menu(message: types.Message):
     msg = message.text
     global flag
+    global commands
     if flag:
         if msg == "Выбор файлов":
-            print("Выбор файлов")
             await menu_button_ok_and_cancel(message)
-            # await cmd_select_inline(message, directory)
-            # await menu_button_ok_and_cancel(message)
+            print("Выбор файлов")
+            await echo_message(message, directory)
 
         elif msg == "Выбрать все файлы":
             print("Выбрать все файлы")
@@ -150,36 +152,61 @@ async def call_back_menu(message: types.Message):
 
 '''SELECT A SECTION --- def'''
 
-hide = types.InlineKeyboardButton
+# hide = types.InlineKeyboardButton
+#
+# @dp.message_handler(lambda message: message.text=="Выбор файлов")
+# async def cmd_select_inline(message: types.Message, project_path=str()):
+#     print("d")
+#     buttons = []
+#     time.sleep(0.5)
+#     keyboard = types.InlineKeyboardMarkup(row_width=1)
+#
+#     paths = path_manager.get_result_rvt_path_list(project_path)
+#     for idx, path in enumerate(paths):
+#         name, ext = os.path.splitext(WindowsPath(path).name)
+#         buttons.append(types.InlineKeyboardButton(name, callback_data=idx +1 or 'btn'))
+#
+#
+#     #
+#     keyboard.add(*buttons)
+#     await message.answer("Выбрать: ", reply_markup=keyboard)
+#
+#
+#
+# @dp.callback_query_handler(text='btn')
+# async def call_for_cmd_line(call: types.CallbackQuery):
+#     global commands
+#     code = call.data[-1]
+#     if any(code):
+#         number = code
+#         number = int(number) if number.isdigit() else 0
+#         commands.append(number)
+#         print(number)
 
-@dp.message_handler(lambda message: message.text in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию'])
-async def cmd_select_inline(message: types.Message, project_path):
+
+
+@dp.message_handler(lambda message: message.text=="Выбор файлов")
+async def echo_message(message: types.Message,project_path):
     buttons = []
-    time.sleep(0.5)
-    keyboard = inline_km(row_width=1)
-    paths = path_manager.get_result_rvt_path_list(project_path)
-    for idx, path in enumerate(paths):
-        name, ext = os.path.splitext(WindowsPath(path).name)
-        buttons.append(inline_kb(name, callback_data=idx + 1 or 'btn'))
+    print("a")
+    if message.text == []:
+        print("b")
+        paths=path_manager.get_result_rvt_path_list(project_path)
+        print("c")
+        if len(paths) > 0:  # если что-то есть идем дальше
+            for x in paths:
+                #  по очереди отправляем данные с базы и прикручиваем inline кнопку
+                inline_btn_delete = types.InlineKeyboardButton('{} удалить'.format(x[1]), callback_data='btn_delete')
+                inline_kb = types.InlineKeyboardMarkup().add(inline_btn_delete)
+                await message.answer('Бумага: {}'.format(x[1]), reply_markup=inline_kb)
 
+#
+#
+@dp.callback_query_handler(lambda c: c.data == 'btn_delete')
+async def process_callback_btn_delete(callback_query: types.CallbackQuery):
 
-    keyboard.add(*buttons)
-    await message.answer("Выбрать: ", reply_markup=keyboard)
-    await menu_button_ok_and_cancel(message)
-
-
-@dp.callback_query_handler(lambda c: c.data == 'btn')
-async def call_for_cmd_line(callback_query: types.CallbackQuery):
-    global commands
-    if any(call.data):
-        number = call.data
-        number = int(number) if number.isdigit() else 0
-        commands.append(number)
-        print(number)
-
-
-
-
+    await bot.answer_callback_query(callback_query.id, 'Удалено с базы')
+#
 
 
 ########################################################################################################################
@@ -196,6 +223,7 @@ async def menu_button_ok_and_cancel(message):
     global reply_km
     global reply_kb
     global flag
+
     if flag:
         markup = reply_km(resize_keyboard=True)
         markup.add(reply_kb('ОК'), reply_kb('ОТМЕНА'))
@@ -208,6 +236,9 @@ async def menu_button_ok_and_cancel(message):
 @dp.message_handler(lambda message: message.text in ['ОК', 'ОТМЕНА'])
 async def call_back_ok_and_cancel(message: types.Message):
     msg = message.text
+    global commands
+    global controlId
+    global directory
     global flag
     if flag:
         if msg == 'ОК':
