@@ -423,3 +423,202 @@
 #
 # ########################################################################################################################
 ########################################################################################################################
+
+
+# hide = types.InlineKeyboardButton
+
+
+# async def create_datalist_test():
+#     datalist = list()
+#     for dig in range(15):
+#         datalist.append(str(dig))
+#
+#     return datalist
+
+
+    # await bot.answer_callback_query(call.id, 'Выбрано')
+
+
+    # await call.answer(call.id, f"Выбрана секция {call}")
+
+
+
+# @dp.callback_query_handler(text="btn")
+# async def rand_name(call: types.callback_query):
+#     await call.message.edit_text("text")
+
+# @dp.message_handler(lambda message: message.text=="Выбор файлов")
+# async def cmd_select_inline(message: types.Message):
+#     directory = os.path.realpath(message.text)
+#
+#
+#
+#     print("d")
+#     buttons = []
+#     print("dd")
+#     keyboard = types.InlineKeyboardMarkup(row_width=1)
+#
+#
+#
+#     paths = path_manager.get_result_rvt_path_list(project_path)
+#     print("ddd")
+#
+#     for item in paths:
+#         l = []
+#         for i in item:
+#             l.append(types.InlineKeyboardButton(text=i, callback_data=i))
+#         paths.append(l)
+#
+#     keyboard_inline_buttons = types.InlineKeyboardMarkup(inline_keyboard=buttons)
+#     return keyboard_inline_buttons
+
+
+    #
+
+    # for idx, path in enumerate(paths):
+    #     name, ext = os.path.splitext(WindowsPath(path).name)
+    #     buttons.append(types.InlineKeyboardButton(name, callback_data=idx +1 or 'btn'))
+
+    # #
+    # keyboard.add(*buttons)
+    # await message.answer("Выбрать: ", reply_markup=keyboard)
+
+
+# ########################################################################################################################
+########################################################################################################################
+# ########################################################################################################################
+########################################################################################################################
+
+# @dp.message_handler(lambda message:  message.text != None)
+# async def test(message: types.Message):
+#     input = message.text
+#     if input in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию']:
+#         await message.answer("BAHTIYAR")
+
+
+# #
+# async def is_enabled():
+#     print('запускаю цикл')
+#     while True:
+#         print('отправляю сообщения')
+#         for user_id in range(100):
+#             await asyncio.sleep(1)
+#             print('отправил')
+#             await asyncio.sleep(1)
+#             print('1111')
+#         print('жду')
+#         await asyncio.sleep(10)
+#
+#
+#
+# async def on_startup(x):
+#     asyncio.create_task(is_enabled())
+
+##################################################################################
+# 2022-09-07
+
+
+
+# if __name__ == '__main__':
+#     executor.start_polling(dp, skip_updates=True, timeout=1, on_startup=on_startup)
+
+# '''SELECT A SECTION --- def'''
+#
+# hide = types.InlineKeyboardButton
+
+
+# async def create_datalist_test():
+#     datalist = list()
+#     for dig in range(15):
+#         datalist.append(str(dig))
+#
+#     return datalist
+
+
+
+#
+# @dp.message_handler(lambda message:  message.text != None)
+# async def test(message: types.Message):
+#     input = message.text
+#     if input in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию']:
+#         await message.answer("BAHTYIAR")
+#
+
+
+   # await bot.answer_callback_query(call.id, 'Выбрано')
+
+
+
+
+
+
+    # await call.answer(call.id, f"Выбрана секция {call}")
+
+
+
+# @dp.callback_query_handler(text="btn")
+# async def rand_name(call: types.callback_query):
+#     await call.message.edit_text("text")
+
+# @dp.message_handler(lambda message: message.text=="Выбор файлов")
+# async def cmd_select_inline(message: types.Message):
+#     directory = os.path.realpath(message.text)
+#
+#
+#
+#     print("d")
+#     buttons = []
+#     print("dd")
+#     keyboard = types.InlineKeyboardMarkup(row_width=1)
+#
+#
+#
+#     paths = path_manager.get_result_rvt_path_list(project_path)
+#     print("ddd")
+#
+#     for item in paths:
+#         l = []
+#         for i in item:
+#             l.append(types.InlineKeyboardButton(text=i, callback_data=i))
+#         paths.append(l)
+#
+#     keyboard_inline_buttons = types.InlineKeyboardMarkup(inline_keyboard=buttons)
+#     return keyboard_inline_buttons
+
+
+    #
+
+    # for idx, path in enumerate(paths):
+    #     name, ext = os.path.splitext(WindowsPath(path).name)
+    #     buttons.append(types.InlineKeyboardButton(name, callback_data=idx +1 or 'btn'))
+
+    # #
+    # keyboard.add(*buttons)
+    # await message.answer("Выбрать: ", reply_markup=keyboard)
+
+
+
+
+# #
+# async def is_enabled():
+#     print('запускаю цикл')
+#     while True:
+#         print('отправляю сообщения')
+#         for user_id in range(100):
+#             await asyncio.sleep(1)
+#             print('отправил')
+#             await asyncio.sleep(1)
+#             print('1111')
+#         print('жду')
+#         await asyncio.sleep(10)
+#
+#
+#
+# async def on_startup(x):
+#     asyncio.create_task(is_enabled())
+
+
+# if __name__ == '__main__':
+#     executor.start_polling(dp, skip_updates=True, timeout=1, on_startup=on_startup)
+
+

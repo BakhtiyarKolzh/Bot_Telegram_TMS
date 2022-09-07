@@ -70,7 +70,11 @@ def get_rvt_paths_by_directory(directory):
     return revit_paths
 
 
-def get_result_rvt_path_list(project_dir_path):
+def get_result_rvt_path_list(project_dir_path: object) -> object:
+    """
+
+    :rtype: object
+    """
     revit_paths = []
     dir_source = get_revit_directories(project_dir_path)
     if isinstance(dir_source, str):
