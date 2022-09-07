@@ -5,9 +5,10 @@ import os
 import time
 import uuid
 from collections import OrderedDict
-
+from multiprocessing import Lock
 import path_manager
 
+mutex = Lock()
 database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 rvt_path_list_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_path_list_bot.txt")
 
@@ -37,25 +38,27 @@ def pop_item_from_dictionary(data):
 
 def write_json_data(path, data):
     if not isinstance(data, dict): return
-    while True:
+    with mutex:
         try:
             path = os.path.realpath(path)
             with open(path, "w") as file:
                 json.dump(data, file)
                 return True
-        except:
+        except Exception as exc:
             time.sleep(0.5)
+            print(exc)
 
 
 def deserialize_json_data(path):
-    while True:
-        if not os.path.isfile(path): return
-        if os.path.isfile(path):
+    if not os.path.isfile(path): return
+    if os.path.isfile(path):
+        with mutex:
             try:
                 with open(path, "r") as file:
                     return json.load(file)
-            except Exception:
+            except Exception as exc:
                 time.sleep(0.5)
+                print(exc)
 
 
 def update_json_data(path, data):

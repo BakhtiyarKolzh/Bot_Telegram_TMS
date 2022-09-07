@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import asyncio
 import os
 import os.path
 import time
@@ -8,6 +8,7 @@ import time
 from pathlib import WindowsPath
 from aiogram import types, executor, Dispatcher, Bot
 
+import asynctelebot
 import database
 import path_manager
 
@@ -21,7 +22,6 @@ bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot)
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
-
 
 flag = False
 directory = None
@@ -64,7 +64,7 @@ async def command_start(message: types.Message):
 
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
     await bot.send_message(chat_id=chat_id, text=welcome, parse_mode='html')
-    markup = reply_km(resize_keyboard=True,one_time_keyboard=True)
+    markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
     markup.add(reply_kb(text='Начать задание'))
     await message.answer("Выберите команду Начать задание", reply_markup=markup)
     print('Начать задание')
@@ -83,13 +83,13 @@ async def call_back_start_to_format(message: types.Message):
     global reply_kb
     global controlId
     flag = True
-    markup = reply_km(row_width=2,resize_keyboard=True,one_time_keyboard=True)
-    markup.add(reply_kb(text='DWG'), reply_kb(text='NWC'), reply_kb(text='PDF'),reply_kb(text='IFC'))
+    markup = reply_km(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+    markup.add(reply_kb(text='DWG'), reply_kb(text='NWC'), reply_kb(text='PDF'), reply_kb(text='IFC'))
     await message.answer("Выберите формат для перевода данных:", reply_markup=markup)
     print("Выберите формат для перевода данных:")
 
 
-@dp.message_handler(lambda message: message.text in ['DWG', 'NWC', 'PDF','IFC'])
+@dp.message_handler(lambda message: message.text in ['DWG', 'NWC', 'PDF', 'IFC'])
 async def call_back_format(message: types.Message):
     global flag
     print(flag)
@@ -115,7 +115,7 @@ async def menu_for_button(message: types.Message):
     directory = message.text
     print(message.text)
     if flag:
-        markup = reply_km(resize_keyboard=True,one_time_keyboard=True)
+        markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
         markup.add((reply_kb(text='Выбор файлов')),
                    (reply_kb(text='Выбрать все файлы')),
                    (reply_kb(text='Отложить операцию')))
@@ -152,7 +152,6 @@ async def call_back_menu(message: types.Message):
             print("Отложить операцию")
 
 
-
 ########################################################################################################################
 ########################################################################################################################
 
@@ -163,22 +162,21 @@ async def create_buttons_test(message):
     global temp
     global inline_km
     global inline_kb
+    time.sleep(0.5)
     if directory:
-
-        paths = path_manager.get_result_rvt_path_list(directory)
-
         buttons = []
         temp = list()
         keyboard = inline_km(row_width=1)
-        for idx, path in enumerate(paths):
-            name, ext = os.path.splitext(WindowsPath(path).name)
+        paths = path_manager.get_result_rvt_path_list(directory)
+        if isinstance(paths, list):
+            for idx, path in enumerate(paths):
+                name, ext = os.path.splitext(WindowsPath(path).name)
+                buttons.append(inline_kb(f'{idx + 1}.\t{name}', callback_data=name))
+                temp.append(name)
 
-            buttons.append(inline_kb(name, callback_data=name))
-            temp.append(name)
-
-        keyboard.add(*buttons)
-        keyboard.get_current()
-        await message.answer("Выбрать:", reply_markup=keyboard)
+            keyboard.add(*buttons)
+            keyboard.get_current()
+            await message.answer("Выбрать:", reply_markup=keyboard)
 
 
 @dp.callback_query_handler(lambda c: c.data in temp)
@@ -186,8 +184,9 @@ async def call_buttons_test(call: types.callback_query):
     global commands
     if any(call.data):
         input = str(call.data)
-        await bot.send_message(call.from_user.id, f'Выбрана:\t{input}')
+        await bot.send_message(call.from_user.id, f'✅ \tВыбран файл:\n{input} ')
         print(input)
+
 
 ########################################################################################################################
 ########################################################################################################################
@@ -205,7 +204,7 @@ async def menu_button_ok_and_cancel(message):
     global flag
 
     if flag:
-        markup = reply_km(resize_keyboard=True,one_time_keyboard=True)
+        markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
         markup.add(reply_kb('ОК'), reply_kb('ОТМЕНА'))
         markup.one_time_keyboard = True
 
@@ -231,11 +230,30 @@ async def call_back_ok_and_cancel(message: types.Message):
             await command_start(message)
             return True
 
+
 ########################################################################################################################
 ########################################################################################################################
+#
+async def database_run():
+    while True:
+        print('database run')
+        await asyncio.sleep(1000)
+        await database.run()
+
+        # for user_id in range(100):
+        #     print('отправил')
+        #     await database.run()
+        #     print('database')
 
 
-# --------------------------------------------------OUT ----------------------------------------------------------------
+async def on_startup(x):
+    asyncio.create_task(database_run())
+
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=False, timeout=1)
+    executor.start_polling(dp, skip_updates=False, timeout=5, on_startup=on_startup)
+
+# --------------------------------------------------OUT ----------------------------------------------------------------
+#
+# if __name__ == '__main__':
+#     executor.start_polling(dp, skip_updates=False, timeout=1)
