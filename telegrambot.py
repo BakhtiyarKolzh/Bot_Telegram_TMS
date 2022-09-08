@@ -24,7 +24,7 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 
 directory = None
 controlId = None
-commands = list()
+dictionary = list()
 
 
 ########################################################################################################################
@@ -43,7 +43,7 @@ def protection_id(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    global commands
+    global dictionary
     global controlId
     global directory
     commands, controlId, directory = list(), None, None
@@ -161,7 +161,7 @@ def menu_for_button(message):
 
 
 def select_button(message):
-    global commands
+    global dictionary
     if message.text == "Выбор файлов":
         cmd_select_inline(message, directory)
         print("Выбор файлов")
@@ -213,7 +213,7 @@ def cmd_select_inline(message, project_path):
 
 @bot.callback_query_handler(func=lambda call: True)
 def call_for_cmd_line(call):
-    global commands
+    global dictionary
     if any(call.data):
         number = call.data
         number = int(number) if number.isdigit() else 0
@@ -227,7 +227,7 @@ def call_for_cmd_line(call):
 ########################################################################################################################
 @bot.message_handler(content_types=['text'])
 def call_button_ok_and_cancel(message):
-    global commands
+    global dictionary
     global controlId
     global directory
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)

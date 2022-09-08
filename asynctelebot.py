@@ -8,7 +8,7 @@ import time
 from pathlib import WindowsPath
 from aiogram import types, executor, Dispatcher, Bot
 
-import asynctelebot
+
 import database
 import path_manager
 
@@ -24,9 +24,9 @@ users_start = authentication.config["ID"]  # последнее - id групп�
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
 flag = False
-directory = None
-controlId = None
-commands = list()
+directory = str()
+controlId = str()
+dictionary = dict()
 
 reply_km = types.ReplyKeyboardMarkup
 reply_kb = types.KeyboardButton
@@ -34,6 +34,7 @@ inline_km = types.InlineKeyboardMarkup
 inline_kb = types.InlineKeyboardButton
 
 temp = list()
+
 ########################################################################################################################
 ########################################################################################################################
 
@@ -53,14 +54,13 @@ async def protection_id(message: types.Message):
 
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
-    global commands
+    global dictionary
     global controlId
     global directory
     global controlId
     global reply_km
     global reply_kb
     chat_id = message.from_user.id
-    commands, controlId, directory = list(), None, None
 
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
     await bot.send_message(chat_id=chat_id, text=welcome, parse_mode='html')
@@ -68,6 +68,9 @@ async def command_start(message: types.Message):
     markup.add(reply_kb(text='Начать задание'))
     await message.answer("Выберите команду Начать задание", reply_markup=markup)
     print('Начать задание')
+    user_id = message.from_user.id
+    print(user_id)
+
 
 
 ########################################################################################################################
@@ -87,6 +90,7 @@ async def call_back_start_to_format(message: types.Message):
     markup.add(reply_kb(text='DWG'), reply_kb(text='NWC'), reply_kb(text='PDF'), reply_kb(text='IFC'))
     await message.answer("Выберите формат для перевода данных:", reply_markup=markup)
     print("Выберите формат для перевода данных:")
+
 
 
 @dp.message_handler(lambda message: message.text in ['DWG', 'NWC', 'PDF', 'IFC'])
@@ -133,18 +137,17 @@ async def menu_for_button(message: types.Message):
 async def call_back_menu(message: types.Message):
     msg = message.text
     global flag
-    global commands
+    global dictionary
     global directory
     await menu_button_ok_and_cancel(message)
     if flag:
         if msg == "Выбор файлов":
-
             print("Выбор файлов")
             await create_buttons_test(message)
 
         elif msg == "Выбрать все файлы":
-            commands.append(0)
-            database.save_command_data(data_path, directory, controlId, commands)
+            dictionary =
+            database.save_command_data(data_path, directory, controlId, dictionary)
             print("Выбрать все файлы")
 
 
@@ -170,9 +173,9 @@ async def create_buttons_test(message):
         paths = path_manager.get_result_rvt_path_list(directory)
         if isinstance(paths, list):
             for idx, path in enumerate(paths):
-                name, ext = os.path.splitext(WindowsPath(path).name)
-                buttons.append(inline_kb(f'{idx + 1}.\t{name}', callback_data=name))
-                temp.append(name)
+                filename, ext = os.path.splitext(WindowsPath(path).name)
+                buttons.append(inline_kb(f'{idx + 1}.\t{filename}', callback_data=filename))
+                temp.append(filename)
 
             keyboard.add(*buttons)
             keyboard.get_current()
@@ -181,11 +184,22 @@ async def create_buttons_test(message):
 
 @dp.callback_query_handler(lambda c: c.data in temp)
 async def call_buttons_test(call: types.callback_query):
-    global commands
+    global dictionary
     if any(call.data):
-        input = str(call.data)
-        await bot.send_message(call.from_user.id, f'✅ \tВыбран файл:\n{input} ')
-        print(input)
+        filename = str(call.data)
+        user_id = call.from_user.id
+        await bot.send_message(call.from_user.id, f'✅ \tВыбран файл:\n{filename} ')
+        vals = dictionary.get(user_id)
+        if vals and isinstance(vals, list):
+            vals.append(filename)
+
+
+        # значение = list cmd
+        # ключ = userId
+
+        print(filename)
+
+
 
 
 ########################################################################################################################
@@ -196,7 +210,7 @@ async def call_buttons_test(call: types.callback_query):
 
 @dp.message_handler(lambda message: message.text in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию'])
 async def menu_button_ok_and_cancel(message):
-    global commands
+    global dictionary
     global controlId
     global directory
     global reply_km
@@ -215,7 +229,7 @@ async def menu_button_ok_and_cancel(message):
 @dp.message_handler(lambda message: message.text in ['ОК', 'ОТМЕНА'])
 async def call_back_ok_and_cancel(message: types.Message):
     msg = message.text
-    global commands
+    global dictionary
     global controlId
     global directory
     global flag
@@ -229,6 +243,9 @@ async def call_back_ok_and_cancel(message: types.Message):
             print('ОТМЕНА')
             await command_start(message)
             return True
+
+
+
 
 
 ########################################################################################################################
