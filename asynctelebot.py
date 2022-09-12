@@ -23,7 +23,7 @@ dp = Dispatcher(bot)
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
-flag = False
+start = False
 directory = str()
 controlId = str()
 dictionary = dict()
@@ -33,6 +33,7 @@ reply_kb = types.KeyboardButton
 inline_km = types.InlineKeyboardMarkup
 inline_kb = types.InlineKeyboardButton
 
+flag= False
 temp = list()
 
 ########################################################################################################################
@@ -81,7 +82,7 @@ async def command_start(message: types.Message):
 
 @dp.message_handler(lambda message: message.text == 'Начать задание')
 async def call_back_start_to_format(message: types.Message):
-    global flag
+    global start
     global reply_km
     global reply_kb
     global controlId
@@ -95,7 +96,7 @@ async def call_back_start_to_format(message: types.Message):
 
 @dp.message_handler(lambda message: message.text in ['DWG', 'NWC', 'PDF', 'IFC'])
 async def call_back_format(message: types.Message):
-    global flag
+    global start
     print(flag)
     if flag:
         await message.answer("Введите путь:")
@@ -112,7 +113,7 @@ async def call_back_format(message: types.Message):
 
 @dp.message_handler(lambda message: os.path.exists(os.path.realpath(message.text)))
 async def menu_for_button(message: types.Message):
-    global flag
+    global start
     global reply_km
     global reply_kb
     global directory
@@ -136,17 +137,17 @@ async def menu_for_button(message: types.Message):
 @dp.message_handler(lambda message: message.text in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию'])
 async def call_back_menu(message: types.Message):
     msg = message.text
-    global flag
+    global start
     global dictionary
     global directory
     await menu_button_ok_and_cancel(message)
     if flag:
         if msg == "Выбор файлов":
             print("Выбор файлов")
-            await create_buttons_test(message)
+            await create_inline_buttons(message)
 
         elif msg == "Выбрать все файлы":
-            dictionary =
+            # dictionary =
             database.save_command_data(data_path, directory, controlId, dictionary)
             print("Выбрать все файлы")
 
@@ -161,7 +162,7 @@ async def call_back_menu(message: types.Message):
 '''Inline buttons '''
 
 
-async def create_buttons_test(message):
+async def create_inline_buttons(message):
     global temp
     global inline_km
     global inline_kb
@@ -183,7 +184,7 @@ async def create_buttons_test(message):
 
 
 @dp.callback_query_handler(lambda c: c.data in temp)
-async def call_buttons_test(call: types.callback_query):
+async def call_inline_buttons(call: types.callback_query):
     global dictionary
     if any(call.data):
         filename = str(call.data)
@@ -204,9 +205,7 @@ async def call_buttons_test(call: types.callback_query):
 
 ########################################################################################################################
 ########################################################################################################################
-
 '''BUTTONS OK AND OTMENA'''
-
 
 @dp.message_handler(lambda message: message.text in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию'])
 async def menu_button_ok_and_cancel(message):
@@ -215,7 +214,7 @@ async def menu_button_ok_and_cancel(message):
     global directory
     global reply_km
     global reply_kb
-    global flag
+    global start
 
     if flag:
         markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
@@ -232,7 +231,7 @@ async def call_back_ok_and_cancel(message: types.Message):
     global dictionary
     global controlId
     global directory
-    global flag
+    global start
     if flag:
         if msg == 'ОК':
             print('ОК')
@@ -243,9 +242,6 @@ async def call_back_ok_and_cancel(message: types.Message):
             print('ОТМЕНА')
             await command_start(message)
             return True
-
-
-
 
 
 ########################################################################################################################
