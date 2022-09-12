@@ -7,7 +7,8 @@ import time
 import os
 
 from pathlib import WindowsPath
-from aiogram import types, executor, Dispatcher, Bot, filters
+from collections import OrderedDict
+from aiogram import types, executor, Dispatcher, Bot
 
 import authentication  #### Library for authentication
 import configure  #### Library for Token
@@ -21,7 +22,7 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 
 ########################################################################################################################
 
-actions = ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию']
+delegates = ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию']
 formats = ['DWG', 'NWC', 'PDF', 'IFC']
 decides = ['ОК', 'ОТМЕНА']
 
@@ -53,22 +54,38 @@ async def create_inline_buttons(message, directory):
     paths = path_manager.get_result_rvt_path_list(directory)
     if isinstance(paths, list):
         for idx, path in enumerate(paths):
-            filename, ext = os.path.splitext(WindowsPath(path).name)
-            btn.append(types.InlineKeyboardButton(f'{idx + 1}.\t{filename}', callback_data=filename))
-            temp.append(filename)
+            try:
+                filename, ext = os.path.splitext(WindowsPath(path).name)
+                btn.append(types.InlineKeyboardButton(f'{idx + 1}.\t{filename}', callback_data=filename))
+                temp.append(filename)
+                print(filename)
+            except Exception as exc:
+                print(exc)
 
         keyboard.add(*btn)
         keyboard.get_current()
-        message = await message.answer("Выберите фаилы: ", reply_markup=keyboard)
+        # message = await message.answer("Выберите фаилы: ", reply_markup=keyboard)
         await create_keyboard_buttons(message, next_action, answer, 2)
+
+
+async def reset(message, start, step_01, step_02, step_03):
+    start, step_01, step_02, step_03 = False, False, False, False
+    await message.answer("Выход из задания")
+    types.ReplyKeyboardRemove()
+    await asyncio.sleep(1)
+    return
 
 
 ########################################################################################################################
 """Output"""
 
-directory = str()
-controlId = str()
-dictionary = dict()
+count = 0
+directory = None
+controlId = None
+
+data = OrderedDict()
+action = dict()
+cmds = list()
 
 ########################################################################################################################
 """Start"""
@@ -77,10 +94,11 @@ dictionary = dict()
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
     global users_start
+    types.ReplyKeyboardRemove()
     if message.chat.id not in users_start:
         await message.answer('У Вас нет прав на выполнение данной команды, обратитесь к администратору')
     else:
-        welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
+        welcome = f"Добро пожаловать 👋, <b>{message.from_user.first_name}</b>"
         await bot.send_message(chat_id=message.from_user.id, text=welcome, parse_mode='html')
         await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
         print('Начать задание')
@@ -98,7 +116,7 @@ async def callback_keyboard_buttons(message: types.Message):
 
     global controlId
     global directory
-    global actions
+    global delegates
     print(input)
 
     global start
@@ -111,31 +129,31 @@ async def callback_keyboard_buttons(message: types.Message):
         step_01 = True
 
     elif step_01 and input in formats:
-        await message.answer("ВВЕДИТЕ ПУТЬ: ")
+        await message.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
         step_02 = True
 
     elif step_02 and input.__contains__('PROJECT'):
         path = os.path.realpath(input)
         if os.path.exists(path):
-            await create_keyboard_buttons(message, actions, 'Выберите нужную операцию', 3)
+            await create_keyboard_buttons(message, delegates, 'Выберите нужную операцию', 3)
             directory = path
             step_03 = True
         else:
             await message.answer("MISTAKE")
 
-    elif step_03 and input in actions:
+    elif step_03 and input in delegates:
         if input == 'Выбор файлов':
             await create_inline_buttons(message, directory)
         else:
             await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 2)
 
     else:
-        start = False
-        await asyncio.sleep(1)
-        types.ReplyKeyboardRemove()
-        await message.answer("Выход из задания")
-        step_01, step_02, step_03 = False, False, False
+        if all([step_01, step_02, step_03]) and input == 'ОК':
+            await message.answer("Задание отправленно в очередь выполнения 👌")
+        await reset(message, start, step_01, step_02, step_03)
 
+
+# message.from_user.first_name
 
 ########################################################################################################################
 """Callback inline buttons handler"""
@@ -143,13 +161,16 @@ async def callback_keyboard_buttons(message: types.Message):
 
 @dp.callback_query_handler(lambda c: c.data in temp)
 async def callback_inline_buttons(call: types.callback_query):
-    global dictionary
+    global count
+    global action
     filename = str(call.data)
-    user_id = call.from_user.id
     await bot.send_message(call.from_user.id, f'✅ \tВыбран файл:\n{filename} ')
-    vals = dictionary.get(user_id)
-    if vals and isinstance(vals, list):
-        vals.append(filename)
+    user = call.from_user.first_name
+    if isinstance(action, dict):
+        data[count] = action[user] = filename
+        database.write_json_data(data_path, data)
+        print(filename)
+        count += 1
 
 
 ########################################################################################################################
