@@ -6,6 +6,7 @@ import time
 import uuid
 from collections import OrderedDict
 from multiprocessing import Lock
+from multiprocessing import Pool
 import path_manager
 
 mutex = Lock()
@@ -83,64 +84,54 @@ def save_command_data(data_path, filepath, control_id, commands):
 
 
 def read_command_data(data_path, data):
-    commands = []
-    session, action = pop_item_from_dictionary(data)
+    count, action = pop_item_from_dictionary(data)
     if write_json_data(data_path, data):
         if isinstance(action, list):
-            filepath = action.pop(0)
             control = action.pop(0)
-            for val in action:
-                if isinstance(val, str) and val.isdigit(): val = int(val)
-                if isinstance(val, int) and val not in commands: commands.append(val)
-
-            return filepath, control, commands
-
-
-def run_cmd(control, paths):
-    global rvt_path_list_file
-    path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
-    if "DWG" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
-        if os.path.exists(bat_file):
-            os.startfile(bat_file)
-            print("Set DWG")
-    if "NWC" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
-        if os.path.exists(bat_file):
-            os.startfile(bat_file)
-            print("Set NWC")
-    if "PDF" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
-        if os.path.exists(bat_file):
-            os.startfile(bat_file)
-            print("Set PDF")
-
-    return
+            directory = action.pop(0)
+            commands = [int(val) for val in action]
+            return control, directory, commands
 
 
 def execute_commands(data_path):
     data = deserialize_json_data(data_path)
     if isinstance(data, dict):
         data = OrderedDict(data)
-        for _ in range(len(data)):
-            result = read_command_data(data_path, data)
-            filepath, control, commands = result
-            if isinstance(commands, list) and len(commands):
-                if isinstance(filepath, str) and isinstance(control, str):
-                    commands = [cmd for cmd in commands if isinstance(cmd, int)]
-                    paths = path_manager.get_result_rvt_path_list(filepath)
+        for action_dict in data.values():
+            for user, commands in action_dict.items():
+                if isinstance(commands, list):
+                    control = commands.pop(0)
+                    directory = commands.pop(0)
+                    print(f'Action = {control} {directory} {commands}')
+                    commands = [int(cmd) for cmd in commands if cmd.isdigit()]
+                    paths = path_manager.get_result_rvt_path_list(directory)
                     paths = path_manager.retrieve_paths(paths, commands)
                     [print(path) for path in paths]
-                    run_cmd(control, paths)
-                    time.sleep(1000)
+                    yield run_cmd(control, paths)
+
+
+def run_cmd(control, paths):
+    pool = Pool(processes=5)
+    global rvt_path_list_file
+
+    def start_bat(bat_file):
+        return os.startfile(bat_file)
+
+    path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
+    if "DWG" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
+        if os.path.exists(bat_file):
+            result = pool.apply(start_bat, bat_file)
+            print(f"Set DWG => {result}")
+    if "NWC" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
+        if os.path.exists(bat_file):
+            result = pool.apply(start_bat, bat_file)
+            print(f"Set DWG => {result}")
+    if "PDF" == control:
+        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
+        if os.path.exists(bat_file):
+            result = pool.apply(start_bat, bat_file)
+            print(f"Set DWG => {result}")
+
     return
-
-
-def run():
-    while True:
-        time.sleep(1)
-        print('while')
-        database_dict = deserialize_json_data(database_path)
-        if not isinstance(database_dict, dict): time.sleep(1000)
-        if isinstance(database_dict, dict) and not len(database_dict): remove(database_path)
-        if isinstance(database_dict, dict) and len(database_dict): execute_commands(database_path)

@@ -21,11 +21,11 @@ import configure  #### Library for Token
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot)
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
-data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
+data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data_file.json")
 
 start = False
 directory = str()
-controlId = str()
+control = str()
 dictionary = dict()
 
 reply_km = types.ReplyKeyboardMarkup
@@ -34,7 +34,7 @@ inline_km = types.InlineKeyboardMarkup
 inline_kb = types.InlineKeyboardButton
 
 flag= False
-temp = list()
+indexes = list()
 
 ########################################################################################################################
 ########################################################################################################################
@@ -56,9 +56,9 @@ async def protection_id(message: types.Message):
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
     global dictionary
-    global controlId
+    global control
     global directory
-    global controlId
+    global control
     global reply_km
     global reply_kb
     chat_id = message.from_user.id
@@ -85,7 +85,7 @@ async def call_back_start_to_format(message: types.Message):
     global start
     global reply_km
     global reply_kb
-    global controlId
+    global control
     flag = True
     markup = reply_km(row_width=2, resize_keyboard=True, one_time_keyboard=True)
     markup.add(reply_kb(text='DWG'), reply_kb(text='NWC'), reply_kb(text='PDF'), reply_kb(text='IFC'))
@@ -100,7 +100,7 @@ async def call_back_format(message: types.Message):
     print(flag)
     if flag:
         await message.answer("Введите путь:")
-        global controlId
+        global control
         controlId = message.text
         print(controlId)
 
@@ -148,7 +148,7 @@ async def call_back_menu(message: types.Message):
 
         elif msg == "Выбрать все файлы":
             # dictionary =
-            database.save_command_data(data_path, directory, controlId, dictionary)
+            database.save_command_data(data_path, directory, control, dictionary)
             print("Выбрать все файлы")
 
 
@@ -163,7 +163,7 @@ async def call_back_menu(message: types.Message):
 
 
 async def create_inline_buttons(message):
-    global temp
+    global indexes
     global inline_km
     global inline_kb
     time.sleep(0.5)
@@ -183,7 +183,7 @@ async def create_inline_buttons(message):
             await message.answer("Выбрать:", reply_markup=keyboard)
 
 
-@dp.callback_query_handler(lambda c: c.data in temp)
+@dp.callback_query_handler(lambda c: c.data in indexes)
 async def call_inline_buttons(call: types.callback_query):
     global dictionary
     if any(call.data):
@@ -210,7 +210,7 @@ async def call_inline_buttons(call: types.callback_query):
 @dp.message_handler(lambda message: message.text in ['Выбор файлов', 'Выбрать все файлы', 'Отложить операцию'])
 async def menu_button_ok_and_cancel(message):
     global dictionary
-    global controlId
+    global control
     global directory
     global reply_km
     global reply_kb
@@ -229,7 +229,7 @@ async def menu_button_ok_and_cancel(message):
 async def call_back_ok_and_cancel(message: types.Message):
     msg = message.text
     global dictionary
-    global controlId
+    global control
     global directory
     global start
     if flag:
