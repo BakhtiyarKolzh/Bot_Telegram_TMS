@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+import concurrent.futures
 import json
 import os
+import subprocess
 import time
 import uuid
 from collections import OrderedDict
 from multiprocessing import Lock
-from multiprocessing import Pool
+
 import path_manager
 
 mutex = Lock()
@@ -106,32 +109,34 @@ def execute_commands(data_path):
                     commands = [int(cmd) for cmd in commands if cmd.isdigit()]
                     paths = path_manager.get_result_rvt_path_list(directory)
                     paths = path_manager.retrieve_paths(paths, commands)
-                    [print(path) for path in paths]
-                    yield run_cmd(control, paths)
+                    run_cmd(control, paths)
 
 
 def run_cmd(control, paths):
-    pool = Pool(processes=5)
     global rvt_path_list_file
 
-    def start_bat(bat_file):
-        return os.startfile(bat_file)
+    def worker(cmd):
+        return subprocess.Popen(cmd, shell=True)
 
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
-    if "DWG" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
-        if os.path.exists(bat_file):
-            result = pool.apply(start_bat, bat_file)
-            print(f"Set DWG => {result}")
-    if "NWC" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
-        if os.path.exists(bat_file):
-            result = pool.apply(start_bat, bat_file)
-            print(f"Set DWG => {result}")
-    if "PDF" == control:
-        bat_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
-        if os.path.exists(bat_file):
-            result = pool.apply(start_bat, bat_file)
-            print(f"Set DWG => {result}")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+
+        if "DWG" == control:
+            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
+            if os.path.exists(cmd):
+                pool.submit(worker, cmd)
+                print(f"Set DWG => ")
+
+        if "NWC" == control:
+            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
+            if os.path.exists(cmd):
+                pool.submit(worker, cmd)
+                print(f"Set DWG => ")
+
+        if "PDF" == control:
+            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
+            if os.path.exists(cmd):
+                pool.submit(worker, cmd)
+                print(f"Set DWG => ")
 
     return
