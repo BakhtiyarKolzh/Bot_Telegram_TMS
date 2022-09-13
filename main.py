@@ -196,13 +196,14 @@ async def database_run():
     global data_path
     while True:
         print('database run')
-        await asyncio.sleep(1)
-        database_dict = database.deserialize_json_data(data_path)
-        if not isinstance(database_dict, dict): await asyncio.sleep(1000)
-        if isinstance(database_dict, dict):
-            if len(database_dict):
+        await asyncio.sleep(0.5)
+        data_dict = database.deserialize_json_data(data_path)
+        if not isinstance(data_dict, dict): await asyncio.sleep(1000)
+        if isinstance(data_dict, dict):
+            if len(data_dict):
+                print("data is dict ")
                 database.execute_commands(data_path)
-                await asyncio.sleep(300)
+                await asyncio.sleep(5)
             else:
                 database.remove(data_path)
 

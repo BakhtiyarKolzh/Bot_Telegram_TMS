@@ -34,6 +34,7 @@ def add_item_to_dictionary(data, key, value):
 def write_json_data(path, data):
     if not isinstance(data, dict): return
     with mutex:
+        print(data.items())
         try:
             path = os.path.realpath(path)
             with open(path, "w") as file:
@@ -69,18 +70,19 @@ def execute_commands(data_path):
     data = deserialize_json_data(data_path)
     if isinstance(data, dict):
         data = OrderedDict(data)
-        action = data.popitem(last=False)
+        count, action = data.popitem(last=False)
+        write_json_data(data_path, data)
         if isinstance(action, dict):
+            print("data is dict")
             for user, commands in action.items():
                 if isinstance(commands, list):
                     control = commands.pop(0)
                     directory = commands.pop(0)
                     print(f'Action = {control} {directory} {commands}')
                     commands = [int(cmd) for cmd in commands if cmd.isdigit()]
-                    paths = path_manager.get_result_rvt_path_list(directory)
-                    paths = path_manager.retrieve_paths(paths, commands)
-                    run_cmd(control, paths)
-                    ####
+                    # paths = path_manager.get_result_rvt_path_list(directory)
+                    # paths = path_manager.retrieve_paths(paths, commands)
+                    # run_cmd(control, paths)
 
 
 def run_cmd(control, paths):
