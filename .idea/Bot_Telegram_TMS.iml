@@ -7,7 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/Bot_Telegram_TMS/venv" />
       <excludeFolder url="file://$MODULE_DIR$/Bot_Telegram_TMS/venv1" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9 (Bot_Telegram_TMS) (2)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
