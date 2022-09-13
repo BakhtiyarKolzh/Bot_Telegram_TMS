@@ -110,6 +110,7 @@ def execute_commands(data_path):
                     paths = path_manager.get_result_rvt_path_list(directory)
                     paths = path_manager.retrieve_paths(paths, commands)
                     run_cmd(control, paths)
+                    ####
 
 
 def run_cmd(control, paths):
