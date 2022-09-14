@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import os.path
-import time
 import os
-
+import os.path
 from pathlib import WindowsPath
+
 from aiogram import types, executor, Dispatcher, Bot
 
 import authentication  #### Library for authentication
 import configure  #### Library for Token
-import path_manager
 import database
+import path_manager
 
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot)
@@ -33,6 +32,7 @@ start, step_01, step_02, step_03 = False, False, False, False
 """Output"""
 
 count = 0
+users = {}
 filenames = list()
 indexes = list()
 data = dict()
@@ -50,12 +50,22 @@ data = data[count] = action
 
 
 ########################################################################################################################
+
+class User:
+    def __init__(self, chat_id, first_name, last_name):
+        self.chat_id = chat_id
+        self.first_name = first_name
+        self.last_name = last_name
+
+
+########################################################################################################################
+
 async def create_keyboard_buttons(message, button_names, answer=str(), row=1, resize=True, one_time=True):
     if isinstance(button_names, list):
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=resize, one_time_keyboard=one_time, row_width=row)
         for name in button_names:
             keyboard.insert(types.KeyboardButton(text=name))
-        await message.answer(answer, reply_markup=keyboard)
+        await bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=keyboard, protect_content=True)
 
 
 async def create_inline_buttons(message, directory):
@@ -79,7 +89,8 @@ async def create_inline_buttons(message, directory):
 
         keyboard.add(*buttons)
         keyboard.get_current()
-        message = await message.answer("Выберите фаилы: ", reply_markup=keyboard)
+        answer = "Выберите фаилы: "
+        await bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=keyboard, protect_content=True)
         await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
@@ -92,7 +103,7 @@ async def reset(message):
     global commands
     commands = list()
     indexes, start, step_01, step_02, step_03 = list(), False, False, False, False
-    await message.answer("Выход из задания")
+    await bot.send_message(chat_id=message.chat.id, text="Выход из задания", protect_content=True)
     types.ReplyKeyboardRemove()
     await asyncio.sleep(1)
     print('RESET')
@@ -108,6 +119,7 @@ async def command_start(message: types.Message):
     global users_start
     types.ReplyKeyboardRemove()
     if message.chat.id not in users_start:
+        users[f"{message.chat.id}"] = User(message.chat.id, message.from_user.first_name, message.from_user.last_name)
         await message.answer('У Вас нет прав на выполнение данной команды, обратитесь к администратору')
     else:
         welcome = f"Добро пожаловать👋, {message.from_user.first_name}"
@@ -122,7 +134,7 @@ async def command_start(message: types.Message):
 """Message handler"""
 
 
-@dp.message_handler(lambda message: any(message.text))
+@dp.message_handler(lambda message: any(message.text), content_types=['text'])
 async def callback_keyboard_buttons(message: types.Message):
     input = message.text
     global directory
@@ -199,13 +211,13 @@ async def database_run():
         await asyncio.sleep(0.5)
         data_dict = database.deserialize_json_data(data_path)
         if not isinstance(data_dict, dict): await asyncio.sleep(1000)
-        if isinstance(data_dict, dict):
-            if len(data_dict):
-                print("data is dict ")
-                database.execute_commands(data_path)
-                await asyncio.sleep(5)
-            else:
-                database.remove(data_path)
+        # if isinstance(data_dict, dict):
+        #     if len(data_dict):
+        #         print("data is dict ")
+        #         database.execute_commands(data_path)
+        #         await asyncio.sleep(5)
+        #     else:
+        #         database.remove(data_path)
 
 
 async def on_startup(x):
