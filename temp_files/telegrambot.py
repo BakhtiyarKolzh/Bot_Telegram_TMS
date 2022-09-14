@@ -20,11 +20,11 @@ import path_manager
 
 bot = telebot.TeleBot(configure.config["token"])
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
-data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
+data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data_file.json")
 
 directory = None
-controlId = None
-commands = list()
+control = None
+dictionary = list()
 
 
 ########################################################################################################################
@@ -43,8 +43,8 @@ def protection_id(message):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    global commands
-    global controlId
+    global dictionary
+    global control
     global directory
     commands, controlId, directory = list(), None, None
     welcome = f"Добро пожаловать, <b>{message.from_user.first_name}</b>"
@@ -92,7 +92,7 @@ def call_button_batch(message):
 
 @bot.message_handler(content_types=['text'])
 def callback(message):
-    global controlId
+    global control
     if message.text == "DWG":
         controlId = "DWG"
         dir_for_DWG = bot.send_message(message.chat.id, "Введите путь для DWG")
@@ -161,7 +161,7 @@ def menu_for_button(message):
 
 
 def select_button(message):
-    global commands
+    global dictionary
     if message.text == "Выбор файлов":
         cmd_select_inline(message, directory)
         print("Выбор файлов")
@@ -169,7 +169,7 @@ def select_button(message):
     elif message.text == "Выбрать все файлы":
         commands.append(0)
         bot.clear_step_handler_by_chat_id(chat_id=message.chat.id)
-        database.save_command_data(data_path, directory, controlId, commands)
+        database.save_command_data(data_path, directory, control, commands)
         bot.send_message(message.chat.id, " 00000 ")
         print("Выбрать все файлы")
         print(commands)
@@ -213,7 +213,7 @@ def cmd_select_inline(message, project_path):
 
 @bot.callback_query_handler(func=lambda call: True)
 def call_for_cmd_line(call):
-    global commands
+    global dictionary
     if any(call.data):
         number = call.data
         number = int(number) if number.isdigit() else 0
@@ -227,8 +227,8 @@ def call_for_cmd_line(call):
 ########################################################################################################################
 @bot.message_handler(content_types=['text'])
 def call_button_ok_and_cancel(message):
-    global commands
-    global controlId
+    global dictionary
+    global control
     global directory
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(types.KeyboardButton('ОК'), types.KeyboardButton('ОТМЕНА'))
@@ -256,8 +256,9 @@ def call_button_ok_and_cancel(message):
 
 
 # --------------------------------------------------OUT -----------------------------------------------------------------
-
-bot.infinity_polling(none_stop=True, interval=0.5)
+def run_polling():
+    bot.infinity_polling(none_stop=True, interval=0.5, timeout=1)
+    return
 ########################################################################################################################
 
 #                                                -SAVES-

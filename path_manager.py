@@ -5,6 +5,7 @@ import codecs
 import os
 import re
 from pathlib import WindowsPath
+from multiprocessing import Lock
 
 ########################################################################################################################
 
@@ -15,6 +16,7 @@ detach = re.compile(r".*\S(отсоединено)$")
 backup = re.compile(r".*(\S\d\d\d+)$")
 enum = re.compile(r'\d+$')
 suffix = '.rvt'
+mutex = Lock()
 
 
 ########################################################################################################################
@@ -70,7 +72,7 @@ def get_rvt_paths_by_directory(directory):
     return revit_paths
 
 
-def get_result_rvt_path_list(project_dir_path):
+def get_result_rvt_path_list(project_dir_path: object) -> object:
     revit_paths = []
     dir_source = get_revit_directories(project_dir_path)
     if isinstance(dir_source, str):
@@ -95,9 +97,10 @@ def numerate_path_list(line_list):
 
 
 def write_revit_path_list_to_file(filepath, paths):
-    with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
-        [fl.write(item + "\n") for item in paths]
-    return os.path.isfile(filepath)
+    with mutex:
+        with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
+            [fl.write(item + "\n") for item in paths]
+        return os.path.isfile(filepath)
 
 
 def retrieve_paths(paths, commands):

@@ -1,0 +1,101 @@
+{
+  "0": {
+    "\u0411\u0430\u0445\u0442\u0438\u044f\u0440": [
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "30"
+    ]
+  },
+  "1": {
+    "\u0411\u0430\u0445\u0442\u0438\u044f\u0440": [
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "31"
+    ]
+  },
+  "2": {
+    "\u0411\u0430\u0445\u0442\u0438\u044f\u0440": [
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "DWG",
+      "20"
+    ]
+  },
+  "3": {
+    "\u0411\u0430\u0445\u0442\u0438\u044f\u0440": [
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "DWG",
+      "33"
+    ]
+  },
+  "4": {
+    "Yerkebulan": [
+      "DWG",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "DWG",
+      "1",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT"
+    ]
+  },
+  "5": {
+    "\u0411\u0430\u0445\u0442\u0438\u044f\u0440": [
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "28",
+      "29",
+      "21",
+      "21",
+      "DWG",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "12"
+    ]
+  },
+  "6": {
+    "Yerkebulan": [
+      "DWG",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "1",
+      "1",
+      "10",
+      "11",
+      "DWG",
+      "11"
+    ]
+  },
+  "7": {
+    "Yerkebulan": [
+      "DWG",
+      "DWG",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "24",
+      "1",
+      "2",
+      "3",
+      "27"
+    ]
+  },
+  "8": {
+    "Yerkebulan": [
+      "DWG",
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "12",
+      "9"
+    ]
+  },
+  "9": {
+    "Yerkebulan": [
+      "DWG",
+      "DWG",
+      "\\\\tmsserv\\tms\\60_AKBULAK_RIVERSIDE\\01_PROJECT\\III_1_AS\\01_RVT",
+      "\\\\tmsserv\\tms\\70_BC_TOKYO_EFG\\01_PROJECT\\III_1_AS\\01_RVT",
+      "12"
+    ]
+  }
+}
