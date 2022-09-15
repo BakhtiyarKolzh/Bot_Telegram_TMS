@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-import datetime
 import os
 import os.path
 import time
@@ -13,7 +12,6 @@ from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import IsSenderContact
 from aiogram.utils.callback_data import CallbackData
-from aiogram.utils.exceptions import MessageNotModified
 
 import authentication  #### Library for authentication
 import configure  #### Library for Token
@@ -31,7 +29,7 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 
 delegates = ['Выбор файлов', 'Выбрать все файлы', 'ОТМЕНА']
 formats = ['DWG', 'NWC', 'PDF', 'IFC']
-decides = ['ОК', 'ОТЛОЖИТЬ', 'ОТМЕНА']
+decides = ['ОК', 'ОТМЕНА']
 
 ########################################################################################################################
 
@@ -96,9 +94,9 @@ async def reset(message):
     global commands
     commands = list()
     start, step_01, step_02, step_03 = False, False, False, False
-    await bot.send_message(chat_id=message.chat.id, text="Выход из задания", protect_content=True)
-    types.ReplyKeyboardRemove()
-    await asyncio.sleep(0.5)
+    await message.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
+    await dp.wait_closed()
+    await bot.close()
     print('RESET')
     return
 
@@ -126,9 +124,9 @@ async def command_start(message: types.Message):
 """Message handler"""
 
 
-@dp.message_handler(IsSenderContact, lambda message: mutex and any(message.text), content_types=types.ContentTypes.TEXT)
-async def callback_keyboard_buttons(message: types.Message):
-    input = message.text
+@dp.message_handler(IsSenderContact, lambda msg: any(msg.text) and len(msg.text), content_types=types.ContentTypes.TEXT)
+async def callback_keyboard_buttons(msg: types.Message):
+    input = msg.text
     global directory
     global delegates
     global start
@@ -139,7 +137,7 @@ async def callback_keyboard_buttons(message: types.Message):
 
     ### get formats
     if start and input == 'Начать задание':
-        await create_keyboard_buttons(message, formats, 'Выберите формат для перевода данных:', 2)
+        await create_keyboard_buttons(msg, formats, 'Выберите формат для перевода данных:', 2)
         step_01 = True
 
     ### set control
@@ -148,7 +146,7 @@ async def callback_keyboard_buttons(message: types.Message):
         step_02 = True
         control = input
         commands.append(control)
-        await message.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
+        await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
 
     ### set directory path
     elif step_02 and input.__contains__('PROJECT'):
@@ -157,28 +155,37 @@ async def callback_keyboard_buttons(message: types.Message):
             # 2 append directory
             step_03 = True
             commands.append(directory)
-            await create_keyboard_buttons(message, delegates, 'Выберите нужную операцию', 3)
-
+            await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
-            await message.answer("❌ ОШИБКА ВВОДА❗❗❗")
+            await msg.answer("❌ ОШИБКА ВВОДА❗❗❗")
             directory = None
 
     elif step_03 and input in delegates:
         if input == 'Выбор файлов':
-            await create_inline_buttons(message, directory)
+            await create_inline_buttons(msg, directory)
         elif input == 'Выбрать все файлы':
-            await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
+            await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
             commands.append(0)
 
-    else:
-        if all([step_01, step_02, step_03]) and input == 'ОК' and len(commands):
-            user_name = message.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
-            await message.answer("Задание отправлено в очередь выполнения 👌")
-            data = {round(time.time()): {user_name: commands}}
-            database.write_json_data(data_path, data)
-            print(data.items())
+    if all([step_01, step_02, step_03]) and input == 'ОК' and len(commands):
+        user_name = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
+        await msg.answer("Задание отправлено в очередь выполнения 👌", reply_markup=types.ReplyKeyboardRemove())
+        data = {round(time.time()): {user_name: commands}}
+        database.write_json_data(data_path, data)
+        return await reset(msg)
 
-        await reset(message)
+    if not all([step_01, step_02, step_03]) and input == 'ОК':
+        return await bot.send_message(msg.chat.id, '🌟', reply_markup=types.ReplyKeyboardRemove())
+
+    if input == 'ОТМЕНА':
+        print('123')
+        return await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+
+    if any([step_01, step_02, step_03]):
+        try:
+            await asyncio.sleep(300)
+        finally:
+            return await reset(msg)
 
 
 ########################################################################################################################
@@ -186,20 +193,13 @@ async def callback_keyboard_buttons(message: types.Message):
 
 
 @dp.callback_query_handler(lambda callback_query: True)
-async def callback_inline_buttons(query: types.callback_query):
-    cmd, user, filename, amount = query.data.split(":", maxsplit=3)
-    await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
-    commands.append(int(amount))
-    return print(amount)
-
-
-########################################################################################################################
-"""exception"""
-
-
-@dp.errors_handler(exception=MessageNotModified)  # for skipping this exception
-async def message_not_modified_handler(update, error):
-    return True
+async def callback_inline_buttons(query: types.inline_query):
+    callback = query.data
+    if isinstance(callback, str) and callback.startswith('cmd'):
+        cmd, user, filename, amount = callback.split(":", maxsplit=3)
+        await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
+        commands.append(int(amount))
+        return print(amount)
 
 
 ########################################################################################################################

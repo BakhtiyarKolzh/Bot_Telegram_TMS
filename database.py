@@ -15,15 +15,6 @@ mutex = Lock()
 rvt_path_list_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_path_list_bot.txt")
 
 
-def remove(path):
-    if os.path.isfile(path):
-        try:
-            os.unlink(path)
-        except:
-            pass
-    return
-
-
 def add_item_to_dictionary(data, key, value):
     if isinstance(value, list):
         data[key] = value
@@ -36,7 +27,7 @@ def write_json_data(path, data):
         print(data.items())
         try:
             path = os.path.realpath(path)
-            with open(path, "w") as jsn:
+            with open(path, "w", encoding='utf-8') as jsn:
                 json.dump(data, jsn, ensure_ascii=False)
                 return True
         except Exception as exc:
@@ -49,7 +40,7 @@ def deserialize_json_data(path):
     if os.path.isfile(path):
         with mutex:
             try:
-                with open(path, "r") as file:
+                with open(path, "r", encoding='utf-8') as file:
                     return json.load(file)
             except Exception as exc:
                 time.sleep(0.5)
