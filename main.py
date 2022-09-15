@@ -171,7 +171,7 @@ async def callback_keyboard_buttons(msg: types.Message):
         user_name = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
         await msg.answer("Задание отправлено в очередь выполнения 👌", reply_markup=types.ReplyKeyboardRemove())
         data = {round(time.time()): {user_name: commands}}
-        database.write_json_data(data_path, data)
+        database.update_json_data(data_path, data)
         return await reset(msg)
 
     if not all([step_01, step_02, step_03]) and input == 'ОК':
@@ -209,8 +209,8 @@ async def callback_inline_buttons(query: types.inline_query):
 async def database_run():
     while True:
         global data_path
-        print('run database')
-        await asyncio.sleep(300)
+        await asyncio.sleep(10)
+        print('database activate')
         action = database.stream_read_json(data_path)
         if action and isinstance(action, dict):
             await database.run_command(action)

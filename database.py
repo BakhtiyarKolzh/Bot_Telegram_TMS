@@ -15,26 +15,6 @@ mutex = Lock()
 rvt_path_list_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_path_list_bot.txt")
 
 
-def add_item_to_dictionary(data, key, value):
-    if isinstance(value, list):
-        data[key] = value
-        return data
-
-
-def write_json_data(path, data):
-    if not isinstance(data, dict): return
-    with mutex:
-        print(data.items())
-        try:
-            path = os.path.realpath(path)
-            with open(path, "w", encoding='utf-8') as jsn:
-                json.dump(data, jsn, ensure_ascii=False)
-                return True
-        except Exception as exc:
-            time.sleep(0.5)
-            print(exc)
-
-
 def deserialize_json_data(path):
     if not os.path.isfile(path): return
     if os.path.isfile(path):
@@ -56,17 +36,33 @@ def update_json_data(path, data):
     return data
 
 
+def write_json_data(path, data: dict):
+    if isinstance(data, dict) and len(data):
+        with mutex:
+            print(data.items())
+            try:
+                path = os.path.realpath(path)
+                with open(path, "w", encoding='utf-8') as jsn:
+                    json.dump(data, jsn, ensure_ascii=False)
+                    return True
+            except Exception as exc:
+                time.sleep(0.5)
+                print(exc)
+
+
 def stream_read_json(filepath="data_file.json"):
     if os.path.isfile(filepath):
-        with open(filepath, 'w+', encoding='utf8') as jsn:
+        with open(filepath, 'r', encoding='utf8') as jsn:
             try:
                 data: dict = json.load(jsn)
                 if data and len(data):
+                    print(data.items())
                     order = OrderedDict(data)
                     action = order.popitem(last=False)
-                    json.dump(order, jsn, ensure_ascii=False)
             except json.JSONDecodeError as e:
                 return print(e)
+            finally:
+                write_json_data(filepath, order)
             return action
 
 
