@@ -72,9 +72,9 @@ def get_rvt_paths_by_directory(directory):
     return revit_paths
 
 
-def get_result_rvt_path_list(project_dir_path: object) -> object:
+def get_result_rvt_path_list(directory: str) -> list:
     revit_paths = []
-    dir_source = get_revit_directories(project_dir_path)
+    dir_source = get_revit_directories(directory)
     if isinstance(dir_source, str):
         temp_list = get_rvt_paths_by_directory(dir_source)
         revit_paths.extend(temp_list)
@@ -103,17 +103,6 @@ def write_revit_path_list_to_file(filepath, paths):
         return os.path.isfile(filepath)
 
 
-def retrieve_paths(paths, commands):
-    output = list()
-    counts = len(paths)
-    if isinstance(commands, list):
-        if 0 in commands: return paths
-        for num in sorted(commands):
-            if isinstance(num, int) and num < counts:
-                try:
-                    output.append(paths[num - 1])
-                except Exception as exc:
-                    print("Value {} in {} - {}".format(num, counts, exc))
-    return output
+
 
 #######################################################################################################################
