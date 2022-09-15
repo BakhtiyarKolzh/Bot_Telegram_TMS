@@ -12,7 +12,6 @@ from multiprocessing import Lock
 import path_manager
 
 mutex = Lock()
-database_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 rvt_path_list_file = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\revit_path_list_bot.txt")
 
 
@@ -37,8 +36,8 @@ def write_json_data(path, data):
         print(data.items())
         try:
             path = os.path.realpath(path)
-            with open(path, "w") as file:
-                json.dump(data, file)
+            with open(path, "w") as jsn:
+                json.dump(data, jsn, ensure_ascii=False)
                 return True
         except Exception as exc:
             time.sleep(0.5)
@@ -66,32 +65,51 @@ def update_json_data(path, data):
     return data
 
 
-def execute_commands(data_path):
-    data = deserialize_json_data(data_path)
-    if isinstance(data, dict):
-        data = OrderedDict(data)
-        count, action = data.popitem(last=False)
-        write_json_data(data_path, data)
-        if isinstance(action, dict):
-            print("data is dict")
-            for user, commands in action.items():
-                if isinstance(commands, list):
-                    control = commands.pop(0)
-                    directory = commands.pop(0)
-                    print(f'Action = {control} {directory} {commands}')
-                    commands = [int(cmd) for cmd in commands if cmd.isdigit()]
-                    # paths = path_manager.get_result_rvt_path_list(directory)
-                    # paths = path_manager.retrieve_paths(paths, commands)
-                    # run_cmd(control, paths)
-                    ##################
+def stream_read_json(filepath="data_file.json"):
+    if os.path.isfile(filepath):
+        with open(filepath, 'w+', encoding='utf8') as jsn:
+            try:
+                data: dict = json.load(jsn)
+                if data and len(data):
+                    order = OrderedDict(data)
+                    action = order.popitem(last=False)
+                    json.dump(order, jsn, ensure_ascii=False)
+            except json.JSONDecodeError as e:
+                return print(e)
+            return action
 
 
-def run_cmd(control, paths):
-    global rvt_path_list_file
+def define_action(action: dict):
+    control, directory, commands = None, None, None
+    for user, commands in action.items():
+        control = commands.pop(0)
+        directory = commands.pop(0)
+        commands = [int(cmd) for cmd in commands if cmd.isdigit()]
+        print(f'Action = {control} {directory} {commands}')
+    return control, directory, commands
 
+
+def retrieve_paths_by_numbers(paths, commands):
+    output = list()
+    counts = len(paths)
+    if isinstance(commands, list):
+        if 0 in commands: return paths
+        for num in sorted(commands):
+            if isinstance(num, int) and num < counts:
+                try:
+                    output.append(paths[num - 1])
+                except Exception as exc:
+                    print("Value {} in {} - {}".format(num, counts, exc))
+    return output
+
+
+def run_command(action: dict):
     def worker(cmd):
         return subprocess.Popen(cmd, shell=True)
 
+    control, directory, commands = define_action(action)
+    paths = path_manager.get_result_rvt_path_list(directory)
+    paths = retrieve_paths_by_numbers(paths, commands)
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
 

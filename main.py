@@ -2,11 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import datetime
 import os
 import os.path
+import time
+from multiprocessing import Lock
 from pathlib import WindowsPath
 
 from aiogram import types, executor, Dispatcher, Bot
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher.filters import IsSenderContact
+from aiogram.utils.callback_data import CallbackData
+from aiogram.utils.exceptions import MessageNotModified
 
 import authentication  #### Library for authentication
 import configure  #### Library for Token
@@ -14,7 +21,9 @@ import database
 import path_manager
 
 bot = Bot(token=(configure.config["token"]))
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
+mutex = Lock()
+
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
 
@@ -31,14 +40,7 @@ start, step_01, step_02, step_03 = False, False, False, False
 ########################################################################################################################
 """Output"""
 
-count = 0
-users = {}
-filenames = list()
-indexes = list()
-data = dict()
 commands = list()
-directory = None
-control = None
 
 """
 commands[0] = control
@@ -48,17 +50,14 @@ action = action[user] = commands
 data = data[count] = action
 """
 
+########################################################################################################################
+
+
+calldata = CallbackData('cmd', 'user', 'name', 'amount')
+
 
 ########################################################################################################################
 
-class User:
-    def __init__(self, chat_id, first_name, last_name):
-        self.chat_id = chat_id
-        self.first_name = first_name
-        self.last_name = last_name
-
-
-########################################################################################################################
 
 async def create_keyboard_buttons(message, button_names, answer=str(), row=1, resize=True, one_time=True):
     if isinstance(button_names, list):
@@ -70,42 +69,36 @@ async def create_keyboard_buttons(message, button_names, answer=str(), row=1, re
 
 async def create_inline_buttons(message, directory):
     buttons = []
-    global indexes
-    indexes = list()
-    global filenames
-    filenames = list()
+    user = message.from_user.first_name
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     paths = path_manager.get_result_rvt_path_list(directory)
     if isinstance(paths, list):
         for idx, path in enumerate(paths):
             filename, ext = os.path.splitext(WindowsPath(path).name)
+            filename = filename.encode('cp1251', 'ignore').decode('cp1251')
             if len(filename) < 35:
                 number = f'{idx + 1}'
-                filename = filename.encode('cp1251', 'ignore').decode('cp1251')
-                buttons.append(types.InlineKeyboardButton(f'{number}.\t{filename}', callback_data=number))
-                filenames.append(filename)
-                indexes.append(number)
-                print(filename)
-
+                sequence = f'{number}.\t{filename}'
+                buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
+                                                                                               name=filename,
+                                                                                               amount=number)))
         keyboard.add(*buttons)
         keyboard.get_current()
-        answer = "Выберите фаилы: "
-        await bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=keyboard, protect_content=True)
+        await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
         await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
 async def reset(message):
-    global indexes
     global start
     global step_01
     global step_02
     global step_03
     global commands
     commands = list()
-    indexes, start, step_01, step_02, step_03 = list(), False, False, False, False
+    start, step_01, step_02, step_03 = False, False, False, False
     await bot.send_message(chat_id=message.chat.id, text="Выход из задания", protect_content=True)
     types.ReplyKeyboardRemove()
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.5)
     print('RESET')
     return
 
@@ -114,13 +107,12 @@ async def reset(message):
 """Start"""
 
 
-@dp.message_handler(commands=['start'])
+@dp.message_handler(commands=['start'], state=None)
 async def command_start(message: types.Message):
     global users_start
     types.ReplyKeyboardRemove()
     if message.chat.id not in users_start:
-        users[f"{message.chat.id}"] = User(message.chat.id, message.from_user.first_name, message.from_user.last_name)
-        await message.answer('У Вас нет прав на выполнение данной команды, обратитесь к администратору')
+        await message.answer(text='У Вас нет прав на выполнение данной команды')
     else:
         welcome = f"Добро пожаловать👋, {message.from_user.first_name}"
         await bot.send_message(chat_id=message.from_user.id, text=welcome)
@@ -134,12 +126,11 @@ async def command_start(message: types.Message):
 """Message handler"""
 
 
-@dp.message_handler(lambda message: any(message.text), content_types=['text'])
+@dp.message_handler(IsSenderContact, lambda message: mutex and any(message.text), content_types=types.ContentTypes.TEXT)
 async def callback_keyboard_buttons(message: types.Message):
     input = message.text
     global directory
     global delegates
-    global count
     global start
     global step_01
     global step_02
@@ -153,17 +144,21 @@ async def callback_keyboard_buttons(message: types.Message):
 
     ### set control
     elif step_01 and input in formats:
-        await message.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
-        commands.append(input)
+        # 1 append control
         step_02 = True
+        control = input
+        commands.append(control)
+        await message.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
 
     ### set directory path
     elif step_02 and input.__contains__('PROJECT'):
         directory = os.path.realpath(input)
         if os.path.exists(directory):
-            await create_keyboard_buttons(message, delegates, 'Выберите нужную операцию', 3)
-            commands.append(directory)
+            # 2 append directory
             step_03 = True
+            commands.append(directory)
+            await create_keyboard_buttons(message, delegates, 'Выберите нужную операцию', 3)
+
         else:
             await message.answer("❌ ОШИБКА ВВОДА❗❗❗")
             directory = None
@@ -176,13 +171,13 @@ async def callback_keyboard_buttons(message: types.Message):
             commands.append(0)
 
     else:
-        if all([step_01, step_02, step_03]) and input == 'ОК' and isinstance(data, dict):
+        if all([step_01, step_02, step_03]) and input == 'ОК' and len(commands):
             user_name = message.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
             await message.answer("Задание отправлено в очередь выполнения 👌")
-            data[count] = {user_name: commands}
+            data = {round(time.time()): {user_name: commands}}
             database.write_json_data(data_path, data)
             print(data.items())
-            count += 1
+
         await reset(message)
 
 
@@ -190,14 +185,21 @@ async def callback_keyboard_buttons(message: types.Message):
 """Callback inline buttons handler"""
 
 
-@dp.callback_query_handler(lambda c: c.data in indexes)
-async def callback_inline_buttons(call: types.callback_query):
-    global filenames
-    number = call.data
-    for idx, filename in enumerate(filenames):
-        if number == f'{idx + 1}':
-            await bot.send_message(call.from_user.id, f'✅\tВыбран файл:\n{filename}')
-            return commands.append(number)
+@dp.callback_query_handler(lambda callback_query: True)
+async def callback_inline_buttons(query: types.callback_query):
+    cmd, user, filename, amount = query.data.split(":", maxsplit=3)
+    await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
+    commands.append(int(amount))
+    return print(amount)
+
+
+########################################################################################################################
+"""exception"""
+
+
+@dp.errors_handler(exception=MessageNotModified)  # for skipping this exception
+async def message_not_modified_handler(update, error):
+    return True
 
 
 ########################################################################################################################
@@ -205,19 +207,13 @@ async def callback_inline_buttons(call: types.callback_query):
 
 
 async def database_run():
-    global data_path
     while True:
-        print('database run')
-        await asyncio.sleep(0.5)
-        data_dict = database.deserialize_json_data(data_path)
-        if not isinstance(data_dict, dict): await asyncio.sleep(1000)
-        # if isinstance(data_dict, dict):
-        #     if len(data_dict):
-        #         print("data is dict ")
-        #         database.execute_commands(data_path)
-        #         await asyncio.sleep(5)
-        #     else:
-        #         database.remove(data_path)
+        global data_path
+        print('run database')
+        await asyncio.sleep(300)
+        action = database.stream_read_json(data_path)
+        if action and isinstance(action, dict):
+            await database.run_command(action)
 
 
 async def on_startup(x):
@@ -225,4 +221,5 @@ async def on_startup(x):
 
 
 if __name__ == '__main__':
+    dp.bind_filter(IsSenderContact)
     executor.start_polling(dp, skip_updates=False, timeout=5, on_startup=on_startup)
