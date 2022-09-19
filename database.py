@@ -77,13 +77,11 @@ def retrieve_paths_by_numbers(paths, numbers):
         [print(num) for num in digits]
         if 0 in digits: return paths
         for num in sorted(digits):
-            if isinstance(num, int):
-                if num not in digits:
-                    try:
-                        digits.add(num)
-                        output.append(paths[num - 1])
-                    except:
-                        pass
+            try:
+                digits.add(num)
+                output.append(paths[num - 1])
+            except:
+                pass
     return output
 
 
@@ -94,9 +92,9 @@ def run_command(data: dict):
     control = data.get('control')
     numbers = data.get('numbers')
     directory = data.get('directory')
-    print(f'{control} {numbers} {directory}')
     paths = path_manager.get_result_rvt_path_list(directory)
     paths = retrieve_paths_by_numbers(paths, numbers)
+    print(f'\tfinal => {control} {paths} {directory}')
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
 
@@ -110,12 +108,12 @@ def run_command(data: dict):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
-                print(f"Set DWG => ")
+                print(f"Set NWC => ")
 
         if "PDF" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
-                print(f"Set DWG => ")
+                print(f"Set PDF => ")
 
     return
