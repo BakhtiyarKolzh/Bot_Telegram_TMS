@@ -68,25 +68,25 @@ async def create_keyboard_buttons(message, button_names, answer=str(), row=1, re
         await bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=keyboard, protect_content=True)
 
 
-async def create_inline_buttons(message, directory):
-    buttons = []
-    user = message.from_user.first_name
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    paths = path_manager.get_result_rvt_path_list(directory)
-    if isinstance(paths, list):
-        for idx, path in enumerate(paths):
-            filename, ext = os.path.splitext(WindowsPath(path).name)
-            filename = filename.encode('cp1251', 'ignore').decode('cp1251')
-            if len(filename) < 35:
-                number = f'{idx + 1}'
-                sequence = f'{number}.\t{filename}'
-                buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
-                                                                                               name=filename,
-                                                                                               amount=number)))
-        keyboard.add(*buttons)
-        keyboard.get_current()
-        await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
-        await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
+async def create_inline_buttons(message, user, directory):
+    if isinstance(directory, str) and directory.__contains__('PROJECT'):
+        paths = path_manager.get_result_rvt_path_list(directory)
+        keyboard = types.InlineKeyboardMarkup(row_width=1)
+        if isinstance(paths, list):
+            buttons = []
+            for idx, path in enumerate(paths):
+                filename, ext = os.path.splitext(WindowsPath(path).name)
+                filename = filename.encode('cp1251', 'ignore').decode('cp1251')
+                if len(filename) < 35:
+                    number = f'{idx + 1}'
+                    sequence = f'{number}.\t{filename}'
+                    buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
+                                                                                                   name=filename,
+                                                                                                   amount=number)))
+            keyboard.add(*buttons)
+            keyboard.get_current()
+            await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
+            await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
 async def reset(message):
@@ -170,8 +170,10 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
 
     if input in delegates:
         if input == 'Выбор файлов':
+            data = store[user]
+            directory = data.get('directory')
+            await create_inline_buttons(msg, user, directory)
             await state.set_data(update_store(user, store, {'numbers': list()}))
-            return await create_inline_buttons(msg, input)
         elif input == 'Выбрать все файлы':
             await state.set_data(update_store(user, store, {'numbers': [0]}))
             await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
