@@ -68,7 +68,6 @@ def stream_read_json(filepath="data_file.json"):
         return action
 
 
-
 def retrieve_paths_by_numbers(paths, numbers):
     digits = set()
     output = list()
@@ -95,24 +94,25 @@ def run_command(data: dict):
     control = data.get('control')
     numbers = data.get('numbers')
     directory = data.get('directory')
+    print(f'{control} {numbers} {directory}')
     paths = path_manager.get_result_rvt_path_list(directory)
     paths = retrieve_paths_by_numbers(paths, numbers)
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
 
-        if "DWG" == control:
+        if "DWG" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
                 print(f"Set DWG => ")
 
-        if "NWC" == control:
+        if "NWC" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
                 print(f"Set DWG => ")
 
-        if "PDF" == control:
+        if "PDF" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
