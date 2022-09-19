@@ -4,8 +4,9 @@
 import codecs
 import os
 import re
-from pathlib import WindowsPath
+import time
 from multiprocessing import Lock
+from pathlib import WindowsPath
 
 ########################################################################################################################
 
@@ -98,13 +99,10 @@ def numerate_path_list(line_list):
 
 def write_revit_path_list_to_file(filepath, paths):
     [print(p) for p in paths]
-    if os.path.exists(filepath):
+    if os.path.isfile(filepath):
         with mutex:
             with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
                 [fl.write(p + "\n") for p in paths]
-            return os.path.isfile(filepath)
-
-
-
+            return time.sleep(5)
 
 #######################################################################################################################

@@ -207,7 +207,7 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 async def database_run():
     while True:
         global data_path
-        await asyncio.sleep(30)
+        await asyncio.sleep(900)
         print('database activate')
         data = database.stream_read_json(data_path)
         if data and len(data):
