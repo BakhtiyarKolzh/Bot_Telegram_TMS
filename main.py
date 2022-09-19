@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import logging
 import os
 import os.path
 import sys
@@ -9,16 +10,15 @@ import time
 from multiprocessing import Lock
 from pathlib import WindowsPath
 
-import logging
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import IsSenderContact
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-import authentication  #### Library for authentication
-import configure  #### Library for Token
+import authentication
+import configure
 import database
 import path_manager
 
@@ -37,10 +37,6 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 delegates = ['Выбор файлов', 'Выбрать все файлы', 'ОТМЕНА']
 formats = ['DWG', 'NWC', 'PDF', 'IFC']
 decides = ['ОК', 'ОТМЕНА']
-
-########################################################################################################################
-
-start, step_01, step_02, step_03 = False, False, False, False
 
 ########################################################################################################################
 """Output"""
@@ -93,27 +89,6 @@ async def create_inline_buttons(message, user, directory):
             await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
-async def timeout(message, state: FSMContext):
-    try:
-        await asyncio.sleep(300)
-    finally:
-        await message.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
-        await state.reset_state()
-        await dp.wait_closed()
-        await bot.close()
-
-
-def timer_func(func):
-    def wrap_func(*args, **kwargs):
-        t1 = time.time()
-        result = func(*args, **kwargs)
-        t2 = time.time()
-        print(f'Function {func.__name__!r} executed in {(t2 - t1):.4f}s')
-        return result
-
-    return wrap_func
-
-
 def update_store(user: str, store: dict, input: dict):
     with mutex:
         output = store.get(user)
@@ -125,6 +100,14 @@ def update_store(user: str, store: dict, input: dict):
         return store
 
 
+async def reset(msg, user: str, store: dict):
+    if store.get(user):
+        await msg.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
+        await dp.wait_closed()
+        await bot.close()
+        print('Reset')
+
+
 ########################################################################################################################
 """Start"""
 
@@ -132,7 +115,6 @@ def update_store(user: str, store: dict, input: dict):
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
     global users_start
-    types.ReplyKeyboardRemove()
     if message.chat.id not in users_start:
         await message.answer(text='У Вас нет прав на выполнение данной команды')
     else:
@@ -144,11 +126,10 @@ async def command_start(message: types.Message):
             print(e.args)
 
 
-
 ########################################################################################################################
 """Message handler"""
 
-@timer_func
+
 @dp.message_handler(IsSenderContact, lambda msg: any(msg.text), state=Action.action, content_types=ContentText)
 async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
     user = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
@@ -185,9 +166,15 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
         markup = types.ReplyKeyboardRemove()
         if isinstance(store, dict) and input == 'ОК':
             if len(data.get('numbers')):
-                print(store.items())
-                database.update_json_data(data_path, store)
+                print(data.items())
+                data = {user + str(round(time.time())): data}
+                database.update_json_data(data_path, data)
                 await msg.answer("Задание отправлено на выполнения 👌", reply_markup=markup)
+                try:
+                    store.pop(user)
+                    await state.update_data(store)
+                except Exception as e:
+                    print(e.args)
             else:
                 await msg.answer("❌ Неправильный ввод данных", reply_markup=markup)
         await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
@@ -220,10 +207,14 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 async def database_run():
     while True:
         global data_path
-        await asyncio.sleep(100)
+        await asyncio.sleep(30)
         print('database activate')
-        # cdata = database.stream_read_json(data_path)
-        # if cdata and isinstance(cdata, tuple): database.run_command(cdata)
+        data = database.stream_read_json(data_path)
+        if data and len(data):
+            sesion, command = data
+            database.run_command(command)
+            print(sesion)
+
 
 
 async def on_startup(x):
