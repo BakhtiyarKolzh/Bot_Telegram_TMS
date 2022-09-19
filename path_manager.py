@@ -97,10 +97,12 @@ def numerate_path_list(line_list):
 
 
 def write_revit_path_list_to_file(filepath, paths):
-    with mutex:
-        with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
-            [fl.write(item + "\n") for item in paths]
-        return os.path.isfile(filepath)
+    if os.path.isfile(filepath):
+        [print(p) for p in paths]
+        with mutex:
+            with codecs.open(filepath, mode='w', encoding='utf-8', errors='ignore') as fl:
+                [fl.write(p + "\n") for p in paths]
+            return os.path.isfile(filepath)
 
 
 
