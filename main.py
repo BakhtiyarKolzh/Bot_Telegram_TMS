@@ -4,10 +4,12 @@
 import asyncio
 import os
 import os.path
+import sys
 import time
 from multiprocessing import Lock
 from pathlib import WindowsPath
 
+import logging
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -22,7 +24,9 @@ import path_manager
 
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot, storage=MemoryStorage())
+logging.basicConfig(level=logging.INFO)
 ContentText = types.ContentTypes.TEXT
+
 mutex = Lock()
 
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
@@ -89,28 +93,25 @@ async def create_inline_buttons(message, user, directory):
             await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
-async def reset(message):
-    global start
-    global step_01
-    global step_02
-    global step_03
-    global commands
-    print('RESET')
-    if any([step_01, step_02, step_03]):
-        # current_state = await state.get_state()
-        # if current_state not is None: await state.finish()
-        start, step_01, step_02, step_03 = False, False, False, False
-        await message.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
-        await dp.wait_closed()
-        await bot.close()
-        commands = list()
-
-
-async def timeout(message):
+async def timeout(message, state: FSMContext):
     try:
         await asyncio.sleep(300)
     finally:
-        return await reset(message)
+        await message.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
+        await state.reset_state()
+        await dp.wait_closed()
+        await bot.close()
+
+
+def timer_func(func):
+    def wrap_func(*args, **kwargs):
+        t1 = time.time()
+        result = func(*args, **kwargs)
+        t2 = time.time()
+        print(f'Function {func.__name__!r} executed in {(t2 - t1):.4f}s')
+        return result
+
+    return wrap_func
 
 
 def update_store(user: str, store: dict, input: dict):
@@ -135,18 +136,19 @@ async def command_start(message: types.Message):
     if message.chat.id not in users_start:
         await message.answer(text='У Вас нет прав на выполнение данной команды')
     else:
-        global start
-        start = True
-        await Action.action.set()
-        welcome = f"Добро пожаловать👋, {message.from_user.first_name}"
-        await bot.send_message(chat_id=message.from_user.id, text=welcome)
-        await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+        try:
+            await Action.action.set()
+            await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
+            await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+        except Exception as e:
+            print(e.args)
+
 
 
 ########################################################################################################################
 """Message handler"""
 
-
+@timer_func
 @dp.message_handler(IsSenderContact, lambda msg: any(msg.text), state=Action.action, content_types=ContentText)
 async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
     user = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
@@ -166,7 +168,7 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
             await state.set_data(update_store(user, store, {'directory': input}))
             await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
-            await msg.answer("❌ ОШИБКА ВВОДА❗❗❗")
+            await msg.answer("❌ Неправильный ввод данных")
 
     if input in delegates:
         if input == 'Выбор файлов':
@@ -179,17 +181,16 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
             await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
 
     if input in decides:
-        print(store.items())
+        data = store[user]
+        markup = types.ReplyKeyboardRemove()
         if isinstance(store, dict) and input == 'ОК':
-            await msg.answer("Задание отправлено на выполнения 👌", reply_markup=types.ReplyKeyboardRemove())
-            database.update_json_data(data_path, store)
-            await reset(msg)
-
-    # if input == 'ОК':
-    #     return await bot.send_message(msg.chat.id, '🌟', reply_markup=types.ReplyKeyboardRemove())
-    #
-    # if input == 'ОТМЕНА':
-    #     return await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+            if len(data.get('numbers')):
+                print(store.items())
+                database.update_json_data(data_path, store)
+                await msg.answer("Задание отправлено на выполнения 👌", reply_markup=markup)
+            else:
+                await msg.answer("❌ Неправильный ввод данных", reply_markup=markup)
+        await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
 
 
 ########################################################################################################################
@@ -231,4 +232,5 @@ async def on_startup(x):
 
 if __name__ == '__main__':
     dp.bind_filter(IsSenderContact)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     executor.start_polling(dp, skip_updates=False, timeout=5, on_startup=on_startup)
