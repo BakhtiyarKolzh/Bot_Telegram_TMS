@@ -113,7 +113,7 @@ async def timeout(message):
         return await reset(message)
 
 
-def update(user: str, store: dict, input: dict):
+def update_store(user: str, store: dict, input: dict):
     with mutex:
         output = store.get(user)
         if isinstance(output, dict):
@@ -158,22 +158,22 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
         return await create_keyboard_buttons(msg, formats, 'Выберите формат для перевода данных:', 2)
 
     if input in formats:
-        await state.set_data(update(user, store, {'control': input}))
+        await state.set_data(update_store(user, store, {'control': input}))
         return await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
 
     if input.__contains__('PROJECT'):
         if os.path.exists(os.path.realpath(input)):
-            await state.set_data(update(user, store, {'directory': input}))
+            await state.set_data(update_store(user, store, {'directory': input}))
             await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
             await msg.answer("❌ ОШИБКА ВВОДА❗❗❗")
 
     if input in delegates:
         if input == 'Выбор файлов':
-            await state.set_data(update(user, store, {'numbers': None}))
+            await state.set_data(update_store(user, store, {'numbers': list()}))
             return await create_inline_buttons(msg, input)
         elif input == 'Выбрать все файлы':
-            await state.set_data(update(user, store, {'numbers': [0]}))
+            await state.set_data(update_store(user, store, {'numbers': [0]}))
             await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
 
     if input in decides:
@@ -194,14 +194,20 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
 """Callback inline buttons handler"""
 
 
-@dp.callback_query_handler(lambda callback_query: True)
-async def callback_inline_buttons(query: types.inline_query):
+@dp.callback_query_handler(lambda callback_query: True, state=Action.action)
+async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
     callback = query.data
+    store = await state.get_data()
     if isinstance(callback, str) and callback.startswith('cmd'):
         cmd, user, filename, amount = callback.split(":", maxsplit=3)
-        await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
-        commands.append(int(amount))
-        return print(amount)
+        if query.from_user.first_name == user:
+            numbers = list()
+            data = store[user]
+            numbers.append(int(amount))
+            numbers.extend(data['numbers'])
+            await state.set_data(update_store(user, store, {'numbers': numbers}))
+            await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
+            return print(numbers)
 
 
 ########################################################################################################################
@@ -211,7 +217,7 @@ async def callback_inline_buttons(query: types.inline_query):
 async def database_run():
     while True:
         global data_path
-        await asyncio.sleep(30)
+        await asyncio.sleep(100)
         print('database activate')
         # cdata = database.stream_read_json(data_path)
         # if cdata and isinstance(cdata, tuple): database.run_command(cdata)
