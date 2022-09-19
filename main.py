@@ -2,27 +2,31 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import logging
 import os
 import os.path
+import sys
 import time
 from multiprocessing import Lock
 from pathlib import WindowsPath
 
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import IsSenderContact
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-import authentication  #### Library for authentication
-import configure  #### Library for Token
+import authentication
+import configure
 import database
 import path_manager
 
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot, storage=MemoryStorage())
+logging.basicConfig(level=logging.INFO)
 ContentText = types.ContentTypes.TEXT
+
 mutex = Lock()
 
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
@@ -33,10 +37,6 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 delegates = ['Выбор файлов', 'Выбрать все файлы', 'ОТМЕНА']
 formats = ['DWG', 'NWC', 'PDF', 'IFC']
 decides = ['ОК', 'ОТМЕНА']
-
-########################################################################################################################
-
-start, step_01, step_02, step_03 = False, False, False, False
 
 ########################################################################################################################
 """Output"""
@@ -68,49 +68,25 @@ async def create_keyboard_buttons(message, button_names, answer=str(), row=1, re
         await bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=keyboard, protect_content=True)
 
 
-async def create_inline_buttons(message, directory):
-    buttons = []
-    user = message.from_user.first_name
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    paths = path_manager.get_result_rvt_path_list(directory)
-    if isinstance(paths, list):
-        for idx, path in enumerate(paths):
-            filename, ext = os.path.splitext(WindowsPath(path).name)
-            filename = filename.encode('cp1251', 'ignore').decode('cp1251')
-            if len(filename) < 35:
-                number = f'{idx + 1}'
-                sequence = f'{number}.\t{filename}'
-                buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
-                                                                                               name=filename,
-                                                                                               amount=number)))
-        keyboard.add(*buttons)
-        keyboard.get_current()
-        await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
-        await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
-
-
-async def reset(message):
-    global start
-    global step_01
-    global step_02
-    global step_03
-    global commands
-    print('RESET')
-    if any([step_01, step_02, step_03]):
-        # current_state = await state.get_state()
-        # if current_state not is None: await state.finish()
-        start, step_01, step_02, step_03 = False, False, False, False
-        await message.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
-        await dp.wait_closed()
-        await bot.close()
-        commands = list()
-
-
-async def timeout(message):
-    try:
-        await asyncio.sleep(300)
-    finally:
-        return await reset(message)
+async def create_inline_buttons(message, user, directory):
+    if isinstance(directory, str) and directory.__contains__('PROJECT'):
+        paths = path_manager.get_result_rvt_path_list(directory)
+        keyboard = types.InlineKeyboardMarkup(row_width=1)
+        if isinstance(paths, list):
+            buttons = []
+            for idx, path in enumerate(paths):
+                filename, ext = os.path.splitext(WindowsPath(path).name)
+                filename = filename.encode('cp1251', 'ignore').decode('cp1251')
+                if len(filename) < 35:
+                    number = f'{idx + 1}'
+                    sequence = f'{number}.\t{filename}'
+                    buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
+                                                                                                   name=filename,
+                                                                                                   amount=number)))
+            keyboard.add(*buttons)
+            keyboard.get_current()
+            await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
+            await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
 
 
 def update_store(user: str, store: dict, input: dict):
@@ -124,6 +100,14 @@ def update_store(user: str, store: dict, input: dict):
         return store
 
 
+async def reset(msg, user: str, store: dict):
+    if store.get(user):
+        await msg.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
+        await dp.wait_closed()
+        await bot.close()
+        print('Reset')
+
+
 ########################################################################################################################
 """Start"""
 
@@ -131,16 +115,15 @@ def update_store(user: str, store: dict, input: dict):
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
     global users_start
-    types.ReplyKeyboardRemove()
     if message.chat.id not in users_start:
         await message.answer(text='У Вас нет прав на выполнение данной команды')
     else:
-        global start
-        start = True
-        await Action.action.set()
-        welcome = f"Добро пожаловать👋, {message.from_user.first_name}"
-        await bot.send_message(chat_id=message.from_user.id, text=welcome)
-        await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+        try:
+            await Action.action.set()
+            await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
+            await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+        except Exception as e:
+            print(e.args)
 
 
 ########################################################################################################################
@@ -166,28 +149,35 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
             await state.set_data(update_store(user, store, {'directory': input}))
             await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
-            await msg.answer("❌ ОШИБКА ВВОДА❗❗❗")
+            await msg.answer("❌ Неправильный ввод данных")
 
     if input in delegates:
         if input == 'Выбор файлов':
+            data = store[user]
+            directory = data.get('directory')
+            await create_inline_buttons(msg, user, directory)
             await state.set_data(update_store(user, store, {'numbers': list()}))
-            return await create_inline_buttons(msg, input)
         elif input == 'Выбрать все файлы':
             await state.set_data(update_store(user, store, {'numbers': [0]}))
             await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
 
     if input in decides:
-        print(store.items())
+        data = store[user]
+        markup = types.ReplyKeyboardRemove()
         if isinstance(store, dict) and input == 'ОК':
-            await msg.answer("Задание отправлено на выполнения 👌", reply_markup=types.ReplyKeyboardRemove())
-            database.update_json_data(data_path, store)
-            await reset(msg)
-
-    # if input == 'ОК':
-    #     return await bot.send_message(msg.chat.id, '🌟', reply_markup=types.ReplyKeyboardRemove())
-    #
-    # if input == 'ОТМЕНА':
-    #     return await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+            if len(data.get('numbers')):
+                print(data.items())
+                data = {user + str(round(time.time())): data}
+                database.update_json_data(data_path, data)
+                await msg.answer("Задание отправлено на выполнения 👌", reply_markup=markup)
+                try:
+                    store.pop(user)
+                    await state.update_data(store)
+                except Exception as e:
+                    print(e.args)
+            else:
+                await msg.answer("❌ Неправильный ввод данных", reply_markup=markup)
+        await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
 
 
 ########################################################################################################################
@@ -217,10 +207,14 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 async def database_run():
     while True:
         global data_path
-        await asyncio.sleep(100)
+        await asyncio.sleep(30)
         print('database activate')
-        # cdata = database.stream_read_json(data_path)
-        # if cdata and isinstance(cdata, tuple): database.run_command(cdata)
+        data = database.stream_read_json(data_path)
+        if data and len(data):
+            sesion, command = data
+            database.run_command(command)
+            print(sesion)
+
 
 
 async def on_startup(x):
@@ -229,4 +223,5 @@ async def on_startup(x):
 
 if __name__ == '__main__':
     dp.bind_filter(IsSenderContact)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     executor.start_polling(dp, skip_updates=False, timeout=5, on_startup=on_startup)

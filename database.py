@@ -64,27 +64,20 @@ def stream_read_json(filepath="data_file.json"):
                 return print(e)
             else:
                 data = dict(order) if len(order) else dict()
-        write_json_data(filepath, data)
+                write_json_data(filepath, data)
         return action
 
 
-def define_action(action: dict):
-    for user, commands in action.items():
-        digits = list()
-        control = commands.pop(0)
-        directory = commands.pop(0)
-        [digits.append(cmd) for cmd in commands if isinstance(cmd, int)]
-        [digits.append(int(cmd)) for cmd in commands if isinstance(cmd, str) and cmd.isdigit()]
-        print(f'Command = {user} {control} {directory} {digits}')
-        return control, directory, digits
 
-
-def retrieve_paths_by_numbers(paths, commands):
+def retrieve_paths_by_numbers(paths, numbers):
     digits = set()
     output = list()
-    if isinstance(commands, list):
-        if 0 in commands: return paths
-        for num in sorted(commands):
+    if isinstance(numbers, list):
+        [digits.add(num) for num in numbers if isinstance(num, int)]
+        [digits.add(int(num)) for num in numbers if isinstance(num, str) and num.isdigit()]
+        [print(num) for num in digits]
+        if 0 in digits: return paths
+        for num in sorted(digits):
             if isinstance(num, int):
                 if num not in digits:
                     try:
@@ -92,18 +85,18 @@ def retrieve_paths_by_numbers(paths, commands):
                         output.append(paths[num - 1])
                     except:
                         pass
-    [print(c) for c in digits]
     return output
 
 
-def run_command(cdata: tuple):
+def run_command(data: dict):
     def worker(cmd):
         return subprocess.Popen(cmd, shell=True)
 
-    digit, action = cdata
-    control, directory, commands = define_action(action)
+    control = data.get('control')
+    numbers = data.get('numbers')
+    directory = data.get('directory')
     paths = path_manager.get_result_rvt_path_list(directory)
-    paths = retrieve_paths_by_numbers(paths, commands)
+    paths = retrieve_paths_by_numbers(paths, numbers)
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
 
