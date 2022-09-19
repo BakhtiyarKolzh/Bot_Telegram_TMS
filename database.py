@@ -36,15 +36,16 @@ def update_json_data(path, data):
     return data
 
 
-def write_json_data(path, data: dict):
-    if isinstance(data, dict) and len(data):
+def write_json_data(filepath, data: dict):
+    if isinstance(data, dict):
         with mutex:
-            print(data.items())
             try:
-                path = os.path.realpath(path)
-                with open(path, "w", encoding='utf-8') as jsn:
-                    json.dump(data, jsn, ensure_ascii=False)
-                    return True
+                if len(data):
+                    filepath = os.path.realpath(filepath)
+                    with open(filepath, "w", encoding='utf-8') as jsn:
+                        json.dump(data, jsn, ensure_ascii=False)
+                else:
+                    open(filepath, "w").close()
             except Exception as exc:
                 time.sleep(0.5)
                 print(exc)
@@ -61,39 +62,45 @@ def stream_read_json(filepath="data_file.json"):
                     action = order.popitem(last=False)
             except json.JSONDecodeError as e:
                 return print(e)
-            finally:
-                write_json_data(filepath, order)
-            return action
+            else:
+                data = dict(order) if len(order) else dict()
+        write_json_data(filepath, data)
+        return action
 
 
 def define_action(action: dict):
-    control, directory, commands = None, None, None
     for user, commands in action.items():
+        digits = list()
         control = commands.pop(0)
         directory = commands.pop(0)
-        commands = [int(cmd) for cmd in commands if cmd.isdigit()]
-        print(f'Action = {control} {directory} {commands}')
-    return control, directory, commands
+        [digits.append(cmd) for cmd in commands if isinstance(cmd, int)]
+        [digits.append(int(cmd)) for cmd in commands if isinstance(cmd, str) and cmd.isdigit()]
+        print(f'Command = {user} {control} {directory} {digits}')
+        return control, directory, digits
 
 
 def retrieve_paths_by_numbers(paths, commands):
+    digits = set()
     output = list()
-    counts = len(paths)
     if isinstance(commands, list):
         if 0 in commands: return paths
         for num in sorted(commands):
-            if isinstance(num, int) and num < counts:
-                try:
-                    output.append(paths[num - 1])
-                except Exception as exc:
-                    print("Value {} in {} - {}".format(num, counts, exc))
+            if isinstance(num, int):
+                if num not in digits:
+                    try:
+                        digits.add(num)
+                        output.append(paths[num - 1])
+                    except:
+                        pass
+    [print(c) for c in digits]
     return output
 
 
-def run_command(action: dict):
+def run_command(cdata: tuple):
     def worker(cmd):
         return subprocess.Popen(cmd, shell=True)
 
+    digit, action = cdata
     control, directory, commands = define_action(action)
     paths = path_manager.get_result_rvt_path_list(directory)
     paths = retrieve_paths_by_numbers(paths, commands)
