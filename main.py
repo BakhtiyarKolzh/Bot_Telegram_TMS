@@ -23,11 +23,13 @@ import configure
 import database
 import path_manager
 
+mutex = Lock()
+
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot, storage=MemoryStorage())
 logging.basicConfig(level=logging.CRITICAL)
 
-mutex = Lock()
+markup = types.ReplyKeyboardRemove()
 
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
@@ -98,12 +100,12 @@ def update_store(user: str, store: dict, input: dict):
         return store
 
 
-async def reset(msg, user: str, store: dict):
-    if store.get(user):
-        await msg.answer(text='🤖', reply_markup=types.ReplyKeyboardRemove())
-        await dp.wait_closed()
-        await bot.close()
-        print('Reset')
+def close():
+    global activate
+    dp.wait_closed()
+    activate = False
+    print('close')
+    bot.close()
 
 
 ########################################################################################################################
@@ -113,110 +115,124 @@ async def reset(msg, user: str, store: dict):
 @dp.message_handler(commands=['start'])
 async def command_start(message: types.Message):
     global users_start
-    if message.chat.id not in users_start:
-        await message.answer(text='У Вас нет прав на выполнение данной команды')
-    else:
-        try:
-            await asyncio.sleep(0.5)
-            await Action.action.set()
-            await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
-            await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
-        except Exception as e:
-            print(e.args)
+    with mutex:
+        await asyncio.sleep(0.5)
+        if message.chat.id not in users_start:
+            await message.answer(text='У Вас нет прав на выполнение данной команды')
+        else:
+            try:
+                await Action.action.set()
+                await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
+                await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+            except Exception as e:
+                print(e.args)
 
 
 ########################################################################################################################
-"""Message handler"""
+"""Message handler Ok / cancel"""
 
 
-@dp.message_handler(IsSenderContact, lambda msg: any(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
-async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
-    user = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
-    store = await state.get_data()
-    input = msg.text
+@dp.message_handler(commands=decides, state=Action.action, content_types=ContentTypes.TEXT)
+async def callback_decides_buttons(msg: types.Message, state: FSMContext):
+    if input == 'ОК':
+        store = await state.get_data()
+        user = msg.from_user.first_name
+        data = store[user]
+        if isinstance(data, dict):
+            numbers = data.get('numbers')
+            output = '№'.join(sorted(numbers))
+            database.update_json_data(data_path, {f'{round(time.time())}-' + user: data})
+            await msg.answer(f"Oтправлено на выполнения {output} 👌", reply_markup=markup)
+            try:
+                store.pop(user)
+                print(store.items())
+                await state.update_data(store)
+            except Exception as e:
+                print(e.args)
+        else:
+            await msg.answer("❌ Повторите ввод данных", reply_markup=markup)
+
+    await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+
+
+########################################################################################################################
+"""Message handler other commands """
+
+
+@dp.message_handler(lambda msg: any(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
+async def callback_other_buttons(msg: types.Message, state: FSMContext):
     global activate
     activate = True
+    input = msg.text
     print(input)
 
     if input == 'Начать задание':
         return await create_keyboard_buttons(msg, formats, 'Выберите формат для перевода данных:', 2)
 
-    if input in formats:
+    if input in formats and state:
+        store, user = await state.get_data(), msg.from_user.first_name
         await state.set_data(update_store(user, store, {'control': input}))
-        return await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ")
+        return await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ", reply_markup=markup)
 
-    if input.__contains__('PROJECT'):
+    if input.__contains__('PROJECT') and state:
         if os.path.exists(os.path.realpath(input)):
+            store, user = await state.get_data(), msg.from_user.first_name
             await state.set_data(update_store(user, store, {'directory': input}))
-            await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
+            return await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
             await msg.answer("❌ Неправильный ввод данных")
 
-    if input in delegates:
-        if input == 'Выбор файлов':
-            data = store[user]
-            directory = data.get('directory')
+    if input in delegates and state:
+        store = await state.get_data()
+        user = msg.from_user.first_name
+        directory = store[user].get('directory')
+        if input == 'Выбор файлов' and directory:
             await create_inline_buttons(msg, user, directory)
-            await state.set_data(update_store(user, store, {'numbers': list()}))
+            return await state.set_data(update_store(user, store, {'numbers': list()}))
         elif input == 'Выбрать все файлы':
             await state.set_data(update_store(user, store, {'numbers': [0]}))
-            await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
-
-    if input in decides:
-        data = store[user]
-        markup = types.ReplyKeyboardRemove()
-        if isinstance(store, dict) and input == 'ОК':
-            if len(data.get('numbers')):
-                print(data.items())
-                data = {f'{round(time.time())}-' + user: data}
-                database.update_json_data(data_path, data)
-                await msg.answer("Задание отправлено на выполнения 👌", reply_markup=markup)
-                try:
-                    store.pop(user)
-                    await state.update_data(store)
-                except Exception as e:
-                    print(e.args)
-            else:
-                await msg.answer("❌ Неправильный ввод данных", reply_markup=markup)
-        await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+            return await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
 
 
 ########################################################################################################################
 """Callback inline buttons handler"""
 
 
-@dp.callback_query_handler(lambda callback_query: True, state=Action.action)
+@dp.callback_query_handler(lambda query: query.data.startswith('cmd'), state=Action.action)
 async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
-    callback = query.data
-    store = await state.get_data()
-    if isinstance(callback, str) and callback.startswith('cmd'):
-        cmd, user, filename, amount = callback.split(":", maxsplit=3)
-        if query.from_user.first_name == user:
-            numbers = list()
-            data = store[user]
-            numbers.append(int(amount))
-            numbers.extend(data['numbers'])
-            await state.set_data(update_store(user, store, {'numbers': numbers}))
-            await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
-            return print(numbers)
+    cmd, user, filename, amount = query.data.split(":", maxsplit=3)
+    if query.from_user.first_name == user:
+        store = await state.get_data()
+        numbers = list()
+        data = store[user]
+        numbers.append(int(amount))
+        numbers.extend(data['numbers'])
+        await state.set_data(update_store(user, store, {'numbers': numbers}))
+        await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
+        return print(numbers)
 
 
 ########################################################################################################################
 """Database run"""
 
 
-async def database_run():
+def generator(data_path):
     while True:
         global activate
-        global data_path
-        if not activate: await asyncio.sleep(300)
-        data = database.stream_read_json(data_path)
-        if not data: activate = False
-        if data and len(data):
-            session, command = data
-            print('run command activate')
-            database.run_command(command)
-            print(session)
+        sequence = database.stream_read_json(data_path)
+        if not sequence and not activate: close()
+        if sequence and len(sequence):
+            session, command = sequence
+            yield database.run_command(command)
+
+
+async def database_run():
+    global activate
+    global data_path
+    await asyncio.sleep(30)
+    print(f'Activate => {activate}')
+    if activate: generator(data_path)
+    if not activate: await asyncio.sleep(60)
 
 
 async def on_startup(x):
