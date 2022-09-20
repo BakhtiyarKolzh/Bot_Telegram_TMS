@@ -116,9 +116,9 @@ def close():
 async def command_start(message: types.Message):
     global users_start
     with mutex:
-        await asyncio.sleep(0.5)
         if message.chat.id not in users_start:
             await message.answer(text='У Вас нет прав на выполнение данной команды')
+            await asyncio.sleep(5)
         else:
             try:
                 await Action.action.set()
@@ -132,17 +132,17 @@ async def command_start(message: types.Message):
 """Message handler Ok / cancel"""
 
 
-@dp.message_handler(commands=decides, state=Action.action, content_types=ContentTypes.TEXT)
+@dp.message_handler(lambda msg: msg.text in decides, state=Action.action, content_types=ContentTypes.TEXT)
 async def callback_decides_buttons(msg: types.Message, state: FSMContext):
-    if input == 'ОК':
+    if msg.text == 'ОК':
         store = await state.get_data()
         user = msg.from_user.first_name
         data = store[user]
         if isinstance(data, dict):
-            numbers = data.get('numbers')
-            output = '№'.join(sorted(numbers))
+            numbers = sorted(data.get('numbers'))
+            output = ', '.join(str(num) for num in numbers)
             database.update_json_data(data_path, {f'{round(time.time())}-' + user: data})
-            await msg.answer(f"Oтправлено на выполнения {output} 👌", reply_markup=markup)
+            await msg.answer(f"👌 Oтправлено на выполнения => " + output, reply_markup=markup)
             try:
                 store.pop(user)
                 print(store.items())
@@ -152,19 +152,20 @@ async def callback_decides_buttons(msg: types.Message, state: FSMContext):
         else:
             await msg.answer("❌ Повторите ввод данных", reply_markup=markup)
 
-    await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
+    await asyncio.sleep(3)
+    return await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
 
 
 ########################################################################################################################
 """Message handler other commands """
 
 
-@dp.message_handler(lambda msg: any(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
+@dp.message_handler(lambda msg: len(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
 async def callback_other_buttons(msg: types.Message, state: FSMContext):
     global activate
     activate = True
     input = msg.text
-    print(input)
+    print('Input\t' + input)
 
     if input == 'Начать задание':
         return await create_keyboard_buttons(msg, formats, 'Выберите формат для перевода данных:', 2)
