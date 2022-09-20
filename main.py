@@ -16,6 +16,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import IsSenderContact
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
+from aiogram.types import ContentTypes
 
 import authentication
 import configure
@@ -24,8 +25,7 @@ import path_manager
 
 bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot, storage=MemoryStorage())
-logging.basicConfig(level=logging.INFO)
-ContentText = types.ContentTypes.TEXT
+logging.basicConfig(level=logging.CRITICAL)
 
 mutex = Lock()
 
@@ -48,12 +48,10 @@ class Action(StatesGroup):
 
 calldata = CallbackData('cmd', 'user', 'name', 'amount')
 
+activate = False
+
 """
 data = { time.time(): action }
-action[user] = commands 
-commands[0] = control
-commands[1] = directory
-commands[1:] = index + 1
 """
 
 
@@ -119,6 +117,7 @@ async def command_start(message: types.Message):
         await message.answer(text='У Вас нет прав на выполнение данной команды')
     else:
         try:
+            await asyncio.sleep(0.5)
             await Action.action.set()
             await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
             await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
@@ -130,11 +129,13 @@ async def command_start(message: types.Message):
 """Message handler"""
 
 
-@dp.message_handler(IsSenderContact, lambda msg: any(msg.text), state=Action.action, content_types=ContentText)
+@dp.message_handler(IsSenderContact, lambda msg: any(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
 async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
     user = msg.from_user.first_name.encode('cp1251', 'ignore').decode('cp1251')
     store = await state.get_data()
     input = msg.text
+    global activate
+    activate = True
     print(input)
 
     if input == 'Начать задание':
@@ -167,7 +168,7 @@ async def callback_keyboard_buttons(msg: types.Message, state: FSMContext):
         if isinstance(store, dict) and input == 'ОК':
             if len(data.get('numbers')):
                 print(data.items())
-                data = {user + str(round(time.time())): data}
+                data = {f'{round(time.time())}-' + user: data}
                 database.update_json_data(data_path, data)
                 await msg.answer("Задание отправлено на выполнения 👌", reply_markup=markup)
                 try:
@@ -206,15 +207,16 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 
 async def database_run():
     while True:
+        global activate
         global data_path
-        await asyncio.sleep(500)
-        print('database activate')
+        if not activate: await asyncio.sleep(300)
         data = database.stream_read_json(data_path)
+        if not data: activate = False
         if data and len(data):
-            sesion, command = data
+            session, command = data
+            print('run command activate')
             database.run_command(command)
-            print(sesion)
-
+            print(session)
 
 
 async def on_startup(x):

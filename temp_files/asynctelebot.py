@@ -33,7 +33,7 @@ reply_kb = types.KeyboardButton
 inline_km = types.InlineKeyboardMarkup
 inline_kb = types.InlineKeyboardButton
 
-flag= False
+activate= False
 indexes = list()
 
 ########################################################################################################################
@@ -97,8 +97,8 @@ async def call_back_start_to_format(message: types.Message):
 @dp.message_handler(lambda message: message.text in ['DWG', 'NWC', 'PDF', 'IFC'])
 async def call_back_format(message: types.Message):
     global start
-    print(flag)
-    if flag:
+    print(activate)
+    if activate:
         await message.answer("Введите путь:")
         global control
         controlId = message.text
@@ -119,7 +119,7 @@ async def menu_for_button(message: types.Message):
     global directory
     directory = message.text
     print(message.text)
-    if flag:
+    if activate:
         markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
         markup.add((reply_kb(text='Выбор файлов')),
                    (reply_kb(text='Выбрать все файлы')),
@@ -141,7 +141,7 @@ async def call_back_menu(message: types.Message):
     global dictionary
     global directory
     await menu_button_ok_and_cancel(message)
-    if flag:
+    if activate:
         if msg == "Выбор файлов":
             print("Выбор файлов")
             await create_inline_buttons(message)
@@ -216,7 +216,7 @@ async def menu_button_ok_and_cancel(message):
     global reply_kb
     global start
 
-    if flag:
+    if activate:
         markup = reply_km(resize_keyboard=True, one_time_keyboard=True)
         markup.add(reply_kb('ОК'), reply_kb('ОТМЕНА'))
         markup.one_time_keyboard = True
@@ -232,7 +232,7 @@ async def call_back_ok_and_cancel(message: types.Message):
     global control
     global directory
     global start
-    if flag:
+    if activate:
         if msg == 'ОК':
             print('ОК')
             await command_start(message)

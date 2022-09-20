@@ -103,6 +103,7 @@ def run_command(data: dict):
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
                 print(f"Set DWG => ")
+                time.sleep(300)
 
         if "NWC" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
