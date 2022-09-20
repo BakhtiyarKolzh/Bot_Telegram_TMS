@@ -8,15 +8,15 @@ import os.path
 import sys
 import time
 from multiprocessing import Lock
-from pathlib import WindowsPath
+from pathlib import WindowsPath, Path
 
 from aiogram import types, executor, Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import IsSenderContact
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.utils.callback_data import CallbackData
 from aiogram.types import ContentTypes
+from aiogram.utils.callback_data import CallbackData
 
 import authentication
 import configure
@@ -100,12 +100,11 @@ def update_store(user: str, store: dict, input: dict):
         return store
 
 
-def close():
-    global activate
-    dp.wait_closed()
-    activate = False
+async def close_bot(dp):
     print('close')
-    bot.close()
+    global activate
+    activate = False
+    await dp.wait_closed()
 
 
 ########################################################################################################################
@@ -217,27 +216,36 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 """Database run"""
 
 
-def generator(data_path):
+@dp.message_handler()
+async def send_notice(data: dict):
+    for user in users_start:
+        control = data.get('control')
+        numbers = data.get('numbers')
+        parts = Path(os.path.realpath(data.get('directory'))).parts
+        msg = f'Запущен => {parts[1]}\t\t\t[{control}]\t{numbers}'
+        await bot.send_message(chat_id=user, text='🤖')
+        await bot.send_message(chat_id=user, text=msg)
+
+
+async def database_run(dp):
     while True:
         global activate
+        global data_path
+        await asyncio.sleep(15)
+        print(f'Activate => {activate}')
+        if not activate: await asyncio.sleep(300)
         sequence = database.stream_read_json(data_path)
-        if not sequence and not activate: close()
+        if not sequence: await close_bot(dp)
+        print(f'sequence => {sequence}')
         if sequence and len(sequence):
             session, command = sequence
-            yield database.run_command(command)
+            if isinstance(command, dict):
+                if database.run_command(command):
+                    await send_notice(command)
 
 
-async def database_run():
-    global activate
-    global data_path
-    await asyncio.sleep(30)
-    print(f'Activate => {activate}')
-    if activate: generator(data_path)
-    if not activate: await asyncio.sleep(60)
-
-
-async def on_startup(x):
-    asyncio.create_task(database_run())
+async def on_startup(dp):
+    asyncio.create_task(database_run(dp))
 
 
 if __name__ == '__main__':

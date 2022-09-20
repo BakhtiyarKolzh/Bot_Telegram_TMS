@@ -89,6 +89,7 @@ def run_command(data: dict):
     def worker(cmd):
         return subprocess.Popen(cmd, shell=True)
 
+    flag = False
     control = data.get('control')
     numbers = data.get('numbers')
     directory = data.get('directory')
@@ -102,19 +103,21 @@ def run_command(data: dict):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
-                print(f"Set DWG => ")
-                time.sleep(300)
+                print(f"\nSet DWG => ")
+                flag = True
 
         if "NWC" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
-                print(f"Set NWC => ")
+                print(f"\nSet NWC => ")
+                flag = True
 
         if "PDF" == control and len(paths):
             cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
             if os.path.exists(cmd):
                 pool.submit(worker, cmd)
-                print(f"Set PDF => ")
+                print(f"\nSet PDF => ")
+                flag = True
 
-    return
+    return flag
