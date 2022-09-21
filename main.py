@@ -6,7 +6,6 @@ import logging
 import os
 import os.path
 import sys
-import time
 from multiprocessing import Lock
 from pathlib import WindowsPath
 
@@ -52,10 +51,6 @@ class Action(StatesGroup):
 calldata = CallbackData('cmd', 'user', 'name', 'amount')
 
 activate = False
-
-"""
-data = { time.time(): action }
-"""
 
 
 ######################################################################################################################
@@ -138,7 +133,7 @@ async def callback_decides_buttons(msg: types.Message, state: FSMContext):
                 if database.run_command(command):
                     numbers = sorted(command.get('numbers'))
                     output = ', '.join(str(num) for num in numbers)
-                    database.update_json_data(data_path, {f'{round(time.time())}-' + user: command})
+                    # database.update_json_data(data_path, {f'{round(time.time())}-' + user: command})
                     await msg.answer(f"👌 Oтправлено на выполнения => " + output, reply_markup=markup)
             else:
                 await msg.answer("❌ Повторите ввод данных", reply_markup=markup)
