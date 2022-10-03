@@ -89,7 +89,9 @@ def run_command(data: dict):
     def worker(cmd):
         return subprocess.Popen(cmd, shell=True)
 
+    cmd = None
     flag = False
+    option = data.get('option')
     control = data.get('control')
     numbers = data.get('numbers')
     directory = data.get('directory')
@@ -98,26 +100,45 @@ def run_command(data: dict):
     print(f'\tfinal => {control} {paths} {directory}')
     path_manager.write_revit_path_list_to_file(rvt_path_list_file, paths)
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
-
         if "DWG" == control and len(paths):
-            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
-            if os.path.exists(cmd):
+            if option == 'Стандартно':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWG.bat")
+            if option == 'Без связей':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToDWGUnlink.bat")
+            if cmd and os.path.exists(cmd):
+                print(f"\nSet IFC => {cmd}")
                 pool.submit(worker, cmd)
-                print(f"\nSet DWG => ")
                 flag = True
 
         if "NWC" == control and len(paths):
-            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
-            if os.path.exists(cmd):
+            if option == 'Стандартно':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWC.bat")
+            if option == 'Без связей':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToNWCUnlink.bat")
+            if cmd and os.path.exists(cmd):
+                print(f"\nSet IFC => {cmd}")
                 pool.submit(worker, cmd)
-                print(f"\nSet NWC => ")
                 flag = True
 
         if "PDF" == control and len(paths):
-            cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
-            if os.path.exists(cmd):
+            if option == 'Стандартно':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDF.bat")
+            if option == 'Без связей':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToPDFUnlink.bat")
+            if cmd and os.path.exists(cmd):
+                print(f"\nSet IFC => {cmd}")
                 pool.submit(worker, cmd)
-                print(f"\nSet PDF => ")
                 flag = True
 
+        if "IFC" == control and len(paths):
+            if option == 'Стандартно':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToIFC.bat")
+            if option == 'Без связей':
+                cmd = os.path.realpath(r"D:\YandexDisk\RevitExportConfig\BatFiles\ExportBotToIFCUnlink.bat")
+            if cmd and os.path.exists(cmd):
+                print(f"\nSet IFC => {cmd}")
+                pool.submit(worker, cmd)
+                flag = True
+
+    print(option)
     return flag

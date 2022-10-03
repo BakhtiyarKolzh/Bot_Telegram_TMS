@@ -29,7 +29,7 @@ bot = Bot(token=(configure.config["token"]))
 dp = Dispatcher(bot, storage=MemoryStorage())
 logging.basicConfig(level=logging.CRITICAL)
 
-markup = types.ReplyKeyboardRemove()
+remove = types.ReplyKeyboardRemove()
 
 users_start = authentication.config["ID"]  # последнее - id группы если бот что-то должен делать в группе
 data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file.json")
@@ -38,6 +38,7 @@ data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data_file
 
 delegates = ['Выбор файлов', 'Выбрать все файлы', 'ОТМЕНА']
 formats = ['DWG', 'NWC', 'PDF', 'IFC']
+options = ['Стандартно', 'Без связей']
 decides = ['ОК', 'ОТМЕНА']
 
 ########################################################################################################################
@@ -56,17 +57,18 @@ activate = False
 ######################################################################################################################
 
 
-async def create_keyboard_buttons(message, button_names, answer: str, row=1, resize=True, one_time=True):
+async def create_keyboard_buttons(msg, button_names, answer: str, row=1, resize=True, one_time=True):
     if isinstance(button_names, list):
+        await asyncio.sleep(0.125)
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=resize, one_time_keyboard=one_time, row_width=row)
         for name in button_names:
             await asyncio.sleep(0.05)
             keyboard.insert(types.KeyboardButton(text=name))
-        await message.answer(text=answer, reply_markup=keyboard, protect_content=True)
+        await msg.answer(text=answer, reply_markup=keyboard, protect_content=True)
 
 
-async def create_inline_buttons(message, user, directory):
-    if isinstance(directory, str) and directory.__contains__('PROJECT'):
+async def create_inline_buttons(msg, user, directory):
+    if isinstance(directory, str):
         paths = path_manager.get_result_rvt_path_list(directory)
         keyboard = types.InlineKeyboardMarkup(row_width=1)
         if isinstance(paths, list):
@@ -74,17 +76,21 @@ async def create_inline_buttons(message, user, directory):
             for idx, path in enumerate(paths):
                 filename, ext = os.path.splitext(WindowsPath(path).name)
                 filename = filename.encode('cp1251', 'ignore').decode('cp1251')
-                await asyncio.sleep(0.05)
+                print(filename)
                 if len(filename) < 35:
-                    number = f'{idx + 1}'
-                    sequence = f'{number}.\t{filename}'
-                    buttons.append(types.InlineKeyboardButton(sequence, callback_data=calldata.new(user=user,
-                                                                                                   name=filename,
-                                                                                                   amount=number)))
+                    try:
+                        number = f'{idx + 1}'
+                        sequence = f'{number}.\t{filename}'
+                        data = calldata.new(user=user, name=filename, amount=number)
+                        buttons.append(types.InlineKeyboardButton(sequence, callback_data=data))
+                    except Exception as e:
+                        print(e.args)
+
             keyboard.add(*buttons)
             keyboard.get_current()
-            await message.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
-            await create_keyboard_buttons(message, decides, 'Подтвердите операцию', 3)
+            await msg.answer(text="Проекты: ", reply_markup=keyboard, protect_content=True)
+
+    return await create_keyboard_buttons(msg, options, 'Выберите опцию', 2)
 
 
 def update_store(user: str, store: dict, input: dict):
@@ -103,17 +109,17 @@ def update_store(user: str, store: dict, input: dict):
 
 
 @dp.message_handler(commands=['start'])
-async def command_start(message: types.Message):
+async def command_start(msg: types.Message):
     global users_start
     async with lock:
-        if message.chat.id not in users_start:
-            await message.answer(text='У Вас нет прав на выполнение данной команды')
+        if msg.chat.id not in users_start:
+            await msg.answer(text='У Вас нет прав на выполнение данной команды')
             await asyncio.sleep(15)
         else:
             try:
                 await Action.action.set()
-                await message.answer(f"Добро пожаловать👋, {message.from_user.first_name}")
-                await create_keyboard_buttons(message, ['Начать задание'], 'Выберите команду Начать задание')
+                await msg.answer(f"Добро пожаловать👋, {msg.from_user.first_name}")
+                await create_keyboard_buttons(msg, ['Начать задание'], 'Выберите команду Начать задание')
             except Exception as e:
                 print(e.args)
 
@@ -133,13 +139,12 @@ async def callback_decides_buttons(msg: types.Message, state: FSMContext):
                 if database.run_command(command):
                     numbers = sorted(command.get('numbers'))
                     output = ', '.join(str(num) for num in numbers)
-                    # database.update_json_data(data_path, {f'{round(time.time())}-' + user: command})
-                    await msg.answer(f"👌 Oтправлено на выполнения => " + output, reply_markup=markup)
+                    await msg.answer(f"👌 Oтправлено на выполнения => " + output, reply_markup=remove)
             else:
-                await msg.answer("❌ Повторите ввод данных", reply_markup=markup)
+                await msg.answer("❌ Повторите ввод данных", reply_markup=remove)
         try:
             store.pop(user)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1.5)
             await state.update_data(store)
         except Exception as e:
             print(e.args)
@@ -152,6 +157,8 @@ async def callback_decides_buttons(msg: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda msg: len(msg.text), state=Action.action, content_types=ContentTypes.TEXT)
 async def callback_other_buttons(msg: types.Message, state: FSMContext):
+    user = msg.from_user.first_name
+    store = await state.get_data()
     global activate
     activate = True
     input = msg.text
@@ -161,28 +168,28 @@ async def callback_other_buttons(msg: types.Message, state: FSMContext):
         return await create_keyboard_buttons(msg, formats, 'Выберите формат для перевода данных:', 2)
 
     if input in formats and state:
-        store, user = await state.get_data(), msg.from_user.first_name
         await state.set_data(update_store(user, store, {'control': input}))
-        return await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ", reply_markup=markup)
+        return await msg.answer("🗂 ВВЕДИТЕ ПУТЬ: ... ", reply_markup=remove)
 
     if input.__contains__('PROJECT') and state:
         if os.path.exists(os.path.realpath(input)):
-            store, user = await state.get_data(), msg.from_user.first_name
             await state.set_data(update_store(user, store, {'directory': input}))
             return await create_keyboard_buttons(msg, delegates, 'Выберите нужную операцию', 3)
         else:
             await msg.answer("❌ Неправильный ввод данных")
 
     if input in delegates and state:
-        store = await state.get_data()
-        user = msg.from_user.first_name
         directory = store[user].get('directory')
         if input == 'Выбор файлов' and directory:
-            await create_inline_buttons(msg, user, directory)
-            return await state.set_data(update_store(user, store, {'numbers': list()}))
+            await state.set_data(update_store(user, store, {'numbers': []}))
+            return await create_inline_buttons(msg, user, directory)
         elif input == 'Выбрать все файлы':
             await state.set_data(update_store(user, store, {'numbers': [0]}))
-            return await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
+            return await create_keyboard_buttons(msg, options, 'Выберите опцию', 2)
+
+    if input in options and state:
+        await state.set_data(update_store(user, store, {'option': input}))
+        return await create_keyboard_buttons(msg, decides, 'Подтвердите операцию', 3)
 
 
 ########################################################################################################################
