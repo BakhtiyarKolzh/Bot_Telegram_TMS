@@ -222,7 +222,7 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
 #         await bot.send_message(chat_id=user, text='🤖')
 #         await bot.send_message(chat_id=user, text=msg)
 #
-#
+##ASAA#ASAA
 # async def database_run(dp):
 #     while True:
 #         global activate
