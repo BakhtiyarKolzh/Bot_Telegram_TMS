@@ -208,7 +208,7 @@ async def callback_inline_buttons(query: types.inline_query, state: FSMContext):
         await state.set_data(update_store(user, store, {'numbers': numbers}))
         await bot.send_message(query.from_user.id, f'✅\tВыбран файл:\n{filename}')
 
-
+########################################################################################################################
 ########################################################################################################################
 """Database run"""
 
