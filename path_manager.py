@@ -75,16 +75,17 @@ def get_rvt_paths_by_directory(directory):
 
 def get_result_rvt_path_list(directory: str) -> list:
     revit_paths = []
-    dir_source = get_revit_directories(directory)
-    if isinstance(dir_source, str):
-        temp_list = get_rvt_paths_by_directory(dir_source)
-        revit_paths.extend(temp_list)
-    if isinstance(dir_source, list):
-        for dir in dir_source:
-            temp_list = get_rvt_paths_by_directory(dir)
+    with mutex:
+        dir_source = get_revit_directories(directory)
+        if isinstance(dir_source, str):
+            temp_list = get_rvt_paths_by_directory(dir_source)
             revit_paths.extend(temp_list)
+        if isinstance(dir_source, list):
+            for dir in dir_source:
+                temp_list = get_rvt_paths_by_directory(dir)
+                revit_paths.extend(temp_list)
 
-    revit_paths.sort(key=lambda x: calc_numbers(x))
+        revit_paths.sort(key=lambda x: calc_numbers(x))
     return revit_paths
 
 
